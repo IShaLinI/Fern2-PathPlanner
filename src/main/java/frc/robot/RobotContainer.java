@@ -39,7 +39,7 @@ public class RobotContainer {
 
     SmartDashboard.putData(mField);
     configureBindings();
-    
+
   }
 
   private void configureBindings() {
@@ -47,20 +47,18 @@ public class RobotContainer {
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
         -Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboForwardSpeed : Constants.DriveConstants.kNormalForwardSpeed),
-        Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed),
-        mDriver.rightBumper().getAsBoolean()     
-      ),
+        Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed)),
       mDrivetrain)
     );
 
 
-    mDriver.povUp().onTrue(
-      mDrivetrain.changeState(DriveConstants.FrontState.FORWARD)
-    );
+    // mDriver.povUp().onTrue(
+    //   mDrivetrain.changeState(DriveConstants.FrontState.FORWARD)
+    // );
 
-    mDriver.povDown().onTrue(
-      mDrivetrain.changeState(DriveConstants.FrontState.REVERSE)
-    );
+    // mDriver.povDown().onTrue(
+    //   mDrivetrain.changeState(DriveConstants.FrontState.REVERSE)
+    // );
 
     mOperator.povRight().onTrue(
       new InstantCommand(
@@ -159,6 +157,8 @@ public class RobotContainer {
     mField.setRobotPose(mDrivetrain.getRobotPosition());
 
   }
+
+  
 
 public void configureAutoChooser() {
   mAutoChooser.setDefaultOption("Nothing", new SequentialCommandGroup[]{null, null});
