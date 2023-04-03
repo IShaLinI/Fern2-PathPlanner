@@ -14,6 +14,7 @@ public class Constants {
     public static double kNormalForwardSpeed = 0.4;
     public static double kTurboTurningSpeed = 0.5;
     public static double kNormalTurningSpeed = 0.5;
+    public static double kMaxSpeed = 4.5;
 
     //TO CHANGE
     public static double kTrackwidth = 0.61568 - Units.inchesToMeters(3);

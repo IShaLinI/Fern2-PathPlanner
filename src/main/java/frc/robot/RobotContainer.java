@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -32,8 +33,13 @@ public class RobotContainer {
 
   private SendableChooser<SequentialCommandGroup[]> mAutoChooser = new SendableChooser<>();
 
+  private Field2d mField = new Field2d();
+
   public RobotContainer() {
+
+    SmartDashboard.putData(mField);
     configureBindings();
+    
   }
 
   private void configureBindings() {
@@ -145,6 +151,12 @@ public class RobotContainer {
 
 
     configureAutoChooser();
+
+  }
+
+  public void updateField(){
+
+    mField.setRobotPose(mDrivetrain.getRobotPosition());
 
   }
 

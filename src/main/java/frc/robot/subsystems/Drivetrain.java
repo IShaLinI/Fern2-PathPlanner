@@ -15,6 +15,8 @@ import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.controller.LinearPlantInversionFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N2;
@@ -23,10 +25,10 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -50,6 +52,8 @@ public class Drivetrain extends SubsystemBase {
   private final BasePigeonSimCollection mPigeonSim = mPigeon.getSimCollection();
 
   private final DifferentialDriveOdometry mOdometry = new DifferentialDriveOdometry(mPigeon.getRotation2d(), 0, 0);
+
+  private final DifferentialDriveKinematics mKinematics = new DifferentialDriveKinematics(Constants.DriveConstants.kTrackwidth);
 
   private PIDController mPID = new PIDController(0.5, 0, 0);
 
@@ -153,6 +157,12 @@ public class Drivetrain extends SubsystemBase {
 
   }
 
+  public Drivetrain() {
+    
+    configureMotors();
+
+  }
+
   public DifferentialDriveWheelSpeeds getWheelVelocities(){
     return new DifferentialDriveWheelSpeeds(
       mFrontLeft.getSelectedSensorVelocity() * 10 * Constants.DriveConstants.kDistancePerPulse,
@@ -202,8 +212,20 @@ public class Drivetrain extends SubsystemBase {
 
   }
 
-  public void drive(double xSpeed, double zRot, boolean turn) {
-    DifferentialDrive.curvatureDriveIK(xSpeed * mCurrentState.direction, zRot * mCurrentState.direction, turn);
+  public void drive(double xInput, double zInput, boolean speedMod) {
+
+    double modSpeed = speedMod == false ? Constants.DriveConstants.kMaxSpeed : Constants.DriveConstants.kTurboForwardSpeed;
+    
+    var speeds = 
+        new ChassisSpeeds(
+          xInput * mCurrentState.direction * modSpeed,
+          0,
+          zInput * mCurrentState.direction * modSpeed
+      );
+
+    setSpeeds(mKinematics.toWheelSpeeds(speeds));
+    
+ 
   }
 
   public Command changeState(FrontState frontState){
@@ -215,10 +237,7 @@ public class Drivetrain extends SubsystemBase {
     mFrontRight.setSelectedSensorPosition(0);
   }
 
-  public void resetOdometry(){
-    resetOdometry(new Pose2d());
-  }
-  public void resetOdometry(Pose2d newPose){
+  public void updateOdometry(){
     resetEncoders();
     mOdometry.update(mPigeon.getRotation2d(), getWheelDistances()[0], getWheelDistances()[1]);
   }
@@ -257,7 +276,11 @@ public class Drivetrain extends SubsystemBase {
 
   @Override
   public void periodic() {
-    resetOdometry();
+    updateOdometry();
+
+    SmartDashboard.putNumber("wheel distance left", getWheelDistances()[0]);
+    SmartDashboard.putNumber("wheel distance right", getWheelDistances()[1]);
+
   }
 
 }
