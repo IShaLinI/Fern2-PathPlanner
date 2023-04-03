@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.PivotConstants;
 import frc.robot.controls.Deadbander;
@@ -50,15 +49,6 @@ public class RobotContainer {
         Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed)),
       mDrivetrain)
     );
-
-
-    // mDriver.povUp().onTrue(
-    //   mDrivetrain.changeState(DriveConstants.FrontState.FORWARD)
-    // );
-
-    // mDriver.povDown().onTrue(
-    //   mDrivetrain.changeState(DriveConstants.FrontState.REVERSE)
-    // );
 
     mOperator.povRight().onTrue(
       new InstantCommand(

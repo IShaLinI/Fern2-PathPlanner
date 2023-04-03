@@ -50,7 +50,7 @@ public class Drivetrain extends SubsystemBase {
 
   private final DifferentialDriveOdometry mOdometry;
   
-  private final SimpleMotorFeedforward mFeedForward = new SimpleMotorFeedforward(0, 0, 0);
+  private final SimpleMotorFeedforward mFeedForward = new SimpleMotorFeedforward(0.13305, 2.2876, 0.31596);
   private final PIDController mPIDController = new PIDController(0.5, 0, 0);
 
   public static final LinearSystem<N2,N2,N2> mDrivetrainPlant = LinearSystemId.identifyDrivetrainSystem(
