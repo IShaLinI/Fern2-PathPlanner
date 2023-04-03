@@ -31,7 +31,7 @@
       "/SmartDashboard/field": "Field2d"
     },
     "windows": {
-      "/SmartDashboard/field": {
+      "/SmartDashboard/Field": {
         "window": {
           "visible": true
         }

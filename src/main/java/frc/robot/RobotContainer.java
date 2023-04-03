@@ -46,7 +46,7 @@ public class RobotContainer {
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
         -Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboForwardSpeed : Constants.DriveConstants.kNormalForwardSpeed),
-        Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed)),
+        -Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed)),
       mDrivetrain)
     );
 
