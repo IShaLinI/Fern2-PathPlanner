@@ -65,9 +65,10 @@ public class Constants {
         public static final double kInSpeed = 0.35;
         public static final double kOutSpeed = 0.99;
     
-        public static final double kS = 0;
+        public static final double kS = 1;
     
         public static enum State {
+          
           GRAB(-kInSpeed),
           RELEASE(kOutSpeed),
           L1RELEASE(0.30),
@@ -91,22 +92,19 @@ public class Constants {
 
       public static class PivotConstants {
 
-        public static double kGearing = ((1.0 / 25) * (16.0 / 60));
+        public static double kGearing = ((1.0 / 20) * (16.0 / 60));
         public static double kVelocityConversion = kGearing * (1 / 60.0) * 360;
         public static double kPositionConversion = kGearing * 360;
-        public static double kThroughboreOffset = 0.475;
-
-        
-    
+        public static double kThroughboreOffset = 0.496;
 
         public static enum State {
-          SUBSTATION(5),
-          L1(45),
-          L2(-20),
+          SUBSTATION(-5),
+          L1(-45),
+          L2(20),
           STOP(0),
-          STARTING(-80),
-          FLOOR(110),
-          CARRY(-80);
+          STARTING(80),
+          FLOOR(-110),
+          CARRY(80);
     
           public final double angle;
     

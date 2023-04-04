@@ -7,7 +7,6 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-
 import frc.robot.Constants.RobotConstants;
 import frc.robot.Constants.IntakeConstants.State;
 import frc.robot.Constants.RobotConstants.CAN;
@@ -24,7 +23,7 @@ public class Intake extends SubsystemBase {
     mMotor = new WPI_TalonSRX(CAN.kIntake);
     mMotor.configVoltageCompSaturation(RobotConstants.maxVoltage);
     mMotor.enableVoltageCompensation(true);
-    mMotor.setNeutralMode(NeutralMode.Brake);
+    mMotor.setNeutralMode(NeutralMode.Coast);
     mMotor.setInverted(true);
     mMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 40, 15, 0));
 
@@ -32,7 +31,7 @@ public class Intake extends SubsystemBase {
   }
 
   private void runIntake(){
-    mMotor.set(mCurrentState.speed);
+    mMotor.set(mCurrentState.speed * 0.1);
   }
 
   public Command changeState(State state){

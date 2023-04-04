@@ -68,8 +68,6 @@ public class RobotContainer {
       )
     );
 
-  
-
     mOperator.b().whileTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.L1),
