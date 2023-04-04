@@ -6,21 +6,23 @@ package frc.robot;
 
 import edu.wpi.first.math.util.Units;
 
-/** Add your docs here. */
 public class Constants {
 
   public static class DriveConstants{
-    public static double kTurboForwardSpeed = 1.0;
-    public static double kNormalForwardSpeed = 0.4;
-    public static double kTurboTurningSpeed = 0.5;
-    public static double kNormalTurningSpeed = 0.5;
-    public static double kMaxSpeed = 4.5;
 
-    //TO CHANGE
-    public static double kTrackwidth = 0.61568 - Units.inchesToMeters(3);
+    public static double kTrackwidth = Units.inchesToMeters(19);
     public static double kDistancePerPulse = (1.0/2048) * (Units.inchesToMeters(6) * Math.PI) * (1/10.71);
 
+    public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60);
+    public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI); 
+    
+    public static double kTurboForwardSpeed = kMaxSpeed;
+    public static double kNormalForwardSpeed = kMaxSpeed * 0.75;
+    public static double kTurboTurningSpeed = kMaxTurnSpeed;
+    public static double kNormalTurningSpeed = kMaxTurnSpeed * 0.75;
+
     public static enum FrontState {
+     
       FORWARD(1),
       REVERSE(-1);
 
@@ -29,6 +31,7 @@ public class Constants {
       /**
        * @param direction Motor Percentage
        */
+
       FrontState(double direction) {
         this.direction = direction;
       }

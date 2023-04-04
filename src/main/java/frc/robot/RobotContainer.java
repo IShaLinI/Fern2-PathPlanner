@@ -46,8 +46,17 @@ public class RobotContainer {
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
         -Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboForwardSpeed : Constants.DriveConstants.kNormalForwardSpeed),
-        -Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed)),
-      mDrivetrain)
+        -Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed),
+        mDriver.rightBumper().getAsBoolean()),
+        mDrivetrain)
+    );
+
+    mDriver.povUp().onTrue(
+      mDrivetrain.changeState(Constants.DriveConstants.FrontState.FORWARD)
+    );
+
+    mDriver.povDown().onTrue(
+      mDrivetrain.changeState(Constants.DriveConstants.FrontState.REVERSE)
     );
 
     mOperator.povRight().onTrue(
@@ -71,8 +80,6 @@ public class RobotContainer {
         mPivot.changeState(PivotConstants.State.CARRY)
       )
     );
-
-  
 
     mOperator.b().whileTrue(
       new SequentialCommandGroup(
@@ -124,10 +131,6 @@ public class RobotContainer {
     mOperator.rightTrigger().onFalse(
       mIntake.changeState(IntakeConstants.State.STOP)
     );
-
-
-
-
 
     mOperator.povUp().onTrue(
       mPivot.changeState(PivotConstants.State.L2)

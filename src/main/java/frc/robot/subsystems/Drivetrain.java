@@ -26,9 +26,12 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.DriveConstants.FrontState;
 import frc.robot.Constants.RobotConstants.CAN;
 
 public class Drivetrain extends SubsystemBase {
@@ -59,7 +62,9 @@ public class Drivetrain extends SubsystemBase {
     2.53, //Angular kV
     0.081887 //Angular kA
   );
-  
+
+  private FrontState mCurrentState;
+
   public DifferentialDrivetrainSim mDrivetrainSim = new DifferentialDrivetrainSim( // Simulation
     mDrivetrainPlant,
     DCMotor.getFalcon500(2),
@@ -74,7 +79,8 @@ public class Drivetrain extends SubsystemBase {
     mPigeon.reset();
 
     mOdometry = new DifferentialDriveOdometry(mPigeon.getRotation2d(), 0, 0);
-
+    mCurrentState = FrontState.FORWARD;
+    
   }
 
 
@@ -185,13 +191,25 @@ public class Drivetrain extends SubsystemBase {
       mFrontRight.setVoltage(rightOutput + rightFeedforward);
   }
 
-  public void drive(double xSpeed, double rot) {
+  public Command changeState(FrontState frontState){
+    return new InstantCommand(() -> mCurrentState = frontState);
+  }
+  
+  public void drive(double xSpeed, double rot, boolean turnInPlace) {
    
+    double turnMult; 
+    
+    if (turnInPlace == true) {
+      turnMult = 1.5;
+    }else{
+      turnMult = 1;
+    }
+
     var wheelSpeeds = 
       new ChassisSpeeds(
-        xSpeed,
+        xSpeed * mCurrentState.direction,
         0,
-        rot
+        rot * mCurrentState.direction * turnMult
       );
 
     setSpeeds(mKinematics.toWheelSpeeds(wheelSpeeds));
