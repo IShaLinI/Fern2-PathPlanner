@@ -11,15 +11,16 @@ public class Constants {
   public static class DriveConstants{
 
     public static double kTrackwidth = Units.inchesToMeters(19);
-    public static double kDistancePerPulse = (1.0/2048) * (Units.inchesToMeters(6) * Math.PI) * (1/10.71);
+    public static double kDistancePerPulse = (1.0/2048d) * (Units.inchesToMeters(6) * Math.PI) * (1/10.71);
 
-    public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60);
+    public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60d);
     public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI); 
+    //public static double kMaxTurnSpeed = 1;
     
     public static double kTurboForwardSpeed = kMaxSpeed;
-    public static double kNormalForwardSpeed = kMaxSpeed * 0.75;
+    public static double kNormalForwardSpeed = kMaxSpeed * 0.6;
     public static double kTurboTurningSpeed = kMaxTurnSpeed;
-    public static double kNormalTurningSpeed = kMaxTurnSpeed * 0.75;
+    public static double kNormalTurningSpeed = kMaxTurnSpeed * 0.6;
 
     public static enum FrontState {
      
@@ -48,7 +49,8 @@ public class Constants {
           public static int kBackRight = 4;
           public static int kPigeon = 5;
           public static int kIntake = 6;
-          public static int kPivot = 7;
+          public static int kRightPivot = 7;
+          public static int kLeftPivot = 8;
 
         }
     }
@@ -83,9 +85,9 @@ public class Constants {
 
       public static class PivotConstants {
 
-        public static double kGearing = ((1.0/15)*(16.0/60));
-        public static double kVelocityConversion = kGearing*(1/60.0)*360;
-        public static double kPositionConversion = kGearing*360;
+        public static double kGearing = ((1.0 / 25) * (16.0 / 60));
+        public static double kVelocityConversion = kGearing * (1 / 60.0) * 360;
+        public static double kPositionConversion = kGearing * 360;
         public static double kThroughboreOffset = 0.475;
 
         

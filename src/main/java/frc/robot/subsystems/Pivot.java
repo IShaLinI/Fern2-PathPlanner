@@ -17,7 +17,9 @@ import frc.robot.Constants.RobotConstants.CAN;
 
 public class Pivot extends SubsystemBase {
     
-    private final WPI_TalonFX mPivot;
+    private final WPI_TalonFX mMaster;
+    private final WPI_TalonFX mSlave; 
+
     private final DutyCycleEncoder mEncoder;
     private final PIDController mPID;
 
@@ -29,14 +31,16 @@ public class Pivot extends SubsystemBase {
 
     public Pivot() {
 
-        mPivot = new WPI_TalonFX(CAN.kPivot);
+        mMaster = new WPI_TalonFX(CAN.kRightPivot);
+        mSlave = new WPI_TalonFX(CAN.kLeftPivot);
+
         mEncoder = new DutyCycleEncoder(9);
         mPID = new PIDController(2.5 / 20d, 0, 0);
        
         Timer.delay(2);
         
-        mPivot.setInverted(InvertType.InvertMotorOutput);
-        mPivot.setSelectedSensorPosition(0);
+        mMaster.setInverted(InvertType.InvertMotorOutput);
+        mMaster.setSelectedSensorPosition(0);
         mEncoder.setPositionOffset(PivotConstants.kThroughboreOffset);
         falconOffset = degreeToFalcon(getThroughBoreAngle());
 
@@ -46,17 +50,28 @@ public class Pivot extends SubsystemBase {
 
     public void configureMotor() {
 
-        mPivot.configFactoryDefault();
-        mPivot.setNeutralMode(NeutralMode.Brake);
+        mMaster.configFactoryDefault();
+        mMaster.setNeutralMode(NeutralMode.Brake);
+        
+        mSlave.configFactoryDefault();
+        mSlave.setNeutralMode(NeutralMode.Brake);
 
-        mPivot.configVoltageCompSaturation(10);
-        mPivot.enableVoltageCompensation(true);
-        mPivot.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 25, 25, 0));
+        mMaster.configVoltageCompSaturation(10);
+        mMaster.enableVoltageCompensation(true);
+        mMaster.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 25, 25, 0));
+
+        mSlave.configVoltageCompSaturation(10);
+        mSlave.enableVoltageCompensation(true);
+        mSlave.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 25, 25, 0));
+
+        mSlave.follow(mMaster);
+        mSlave.setInverted(InvertType.OpposeMaster);
+
     }
 
     public void runPivot() {
-        mPivot.set(mPID.calculate(getAngle(), mCurrentState.angle)/12);
-        SmartDashboard.putNumber("output",-mPID.calculate(getAngle(), mCurrentState.angle)/12);
+        mMaster.set(mPID.calculate(getAngle(), mCurrentState.angle) / 12);
+        SmartDashboard.putNumber("output",-mPID.calculate(getAngle(), mCurrentState.angle) / 12);
     }
 
     public boolean atTarget() {
@@ -73,12 +88,12 @@ public class Pivot extends SubsystemBase {
     }
 
     public void zeroEncoder() {
-        mPivot.setSelectedSensorPosition(0);
+        mMaster.setSelectedSensorPosition(0);
         falconOffset = degreeToFalcon(getThroughBoreAngle());
     }
 
     public double getAngle() {
-        return falconToDegrees(mPivot.getSelectedSensorPosition() + falconOffset);
+        return falconToDegrees(mMaster.getSelectedSensorPosition() + falconOffset);
     }
 
     public double getThroughBoreAngle () {
@@ -86,7 +101,7 @@ public class Pivot extends SubsystemBase {
     }
 
     public void resetFalcon() {
-        mPivot.setSelectedSensorPosition(0);
+        mMaster.setSelectedSensorPosition(0);
     }
 
     public double degreeToFalcon(double deg) {
@@ -98,7 +113,7 @@ public class Pivot extends SubsystemBase {
     }
 
     public void set(double percent){
-      mPivot.set(percent);
+      mMaster.set(percent);
     }
 
     @Override
@@ -111,7 +126,7 @@ public class Pivot extends SubsystemBase {
         SmartDashboard.putNumber("Falcon Degrees", getAngle());
         SmartDashboard.putNumber("Falcon Offset", falconOffset);
         SmartDashboard.putBoolean("At Setpoint", atTarget());
-        SmartDashboard.putNumber("Motor Voltage", mPivot.get() * 12);
+        SmartDashboard.putNumber("Motor Voltage", mMaster.get() * 12);
         SmartDashboard.putNumber("Set Point", mCurrentState.angle);
 
     }

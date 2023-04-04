@@ -10,6 +10,8 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -26,12 +28,10 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.DriveConstants.FrontState;
 import frc.robot.Constants.RobotConstants.CAN;
 
 public class Drivetrain extends SubsystemBase {
@@ -62,9 +62,7 @@ public class Drivetrain extends SubsystemBase {
     2.53, //Angular kV
     0.081887 //Angular kA
   );
-
-  private FrontState mCurrentState;
-
+  
   public DifferentialDrivetrainSim mDrivetrainSim = new DifferentialDrivetrainSim( // Simulation
     mDrivetrainPlant,
     DCMotor.getFalcon500(2),
@@ -79,8 +77,7 @@ public class Drivetrain extends SubsystemBase {
     mPigeon.reset();
 
     mOdometry = new DifferentialDriveOdometry(mPigeon.getRotation2d(), 0, 0);
-    mCurrentState = FrontState.FORWARD;
-    
+
   }
 
 
@@ -187,29 +184,19 @@ public class Drivetrain extends SubsystemBase {
     final double rightOutput = 
       mPIDController.calculate(getWheelVelocities().rightMetersPerSecond, speeds.rightMetersPerSecond);
 
-      mFrontLeft.setVoltage(leftOutput + leftFeedforward);
-      mFrontRight.setVoltage(rightOutput + rightFeedforward);
+      mFrontLeft.setVoltage(MathUtil.clamp(leftOutput + leftFeedforward, -12, 12));
+      mFrontRight.setVoltage(MathUtil.clamp(rightOutput + rightFeedforward, -12, 12));
   }
 
-  public Command changeState(FrontState frontState){
-    return new InstantCommand(() -> mCurrentState = frontState);
-  }
-  
-  public void drive(double xSpeed, double rot, boolean turnInPlace) {
+  public void drive(double xSpeed, double rot) {
    
-    double turnMult; 
-    
-    if (turnInPlace == true) {
-      turnMult = 1.5;
-    }else{
-      turnMult = 1;
-    }
+    SmartDashboard.putNumber("rot", rot);
 
     var wheelSpeeds = 
       new ChassisSpeeds(
-        xSpeed * mCurrentState.direction,
+        xSpeed,
         0,
-        rot * mCurrentState.direction * turnMult
+        rot
       );
 
     setSpeeds(mKinematics.toWheelSpeeds(wheelSpeeds));
