@@ -10,8 +10,6 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
-
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -28,6 +26,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -56,6 +55,8 @@ public class Drivetrain extends SubsystemBase {
   private final SimpleMotorFeedforward mFeedForward = new SimpleMotorFeedforward(0.13305, 2.2876, 0.31596);
   private final PIDController mPIDController = new PIDController(0.5, 0, 0);
 
+  private Field2d mField = new Field2d();
+
   public static final LinearSystem<N2,N2,N2> mDrivetrainPlant = LinearSystemId.identifyDrivetrainSystem(
     2.2195, //Linear kV
     0.32787, //Linear kA
@@ -77,6 +78,8 @@ public class Drivetrain extends SubsystemBase {
     mPigeon.reset();
 
     mOdometry = new DifferentialDriveOdometry(mPigeon.getRotation2d(), 0, 0);
+
+    SmartDashboard.putData("Field", mField);
 
   }
 
@@ -188,15 +191,19 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public void setVoltages(double leftVolts, double rightVolts){
-    
-    mFrontLeft.setVoltage(MathUtil.clamp(leftVolts, -12, 12));
-    mFrontRight.setVoltage(MathUtil.clamp(rightVolts, -12, 12));
-
+    mFrontLeft.setVoltage(leftVolts);
+    mFrontRight.setVoltage(rightVolts);
   }
 
-  public void drive(double xSpeed, double rot) {
+  public void drive(double xSpeed, double rot, boolean turbo) {
    
-    SmartDashboard.putNumber("rot", rot);
+    if(turbo){
+      xSpeed *= DriveConstants.kTurboForwardSpeed;
+      rot *= DriveConstants.kTurboTurningSpeed;
+    }else{
+      xSpeed *= DriveConstants.kNormalForwardSpeed;
+      rot *= DriveConstants.kNormalTurningSpeed;
+    }
 
     var wheelSpeeds = 
       new ChassisSpeeds(
@@ -219,11 +226,7 @@ public class Drivetrain extends SubsystemBase {
 
   public void updateOdometry() {
     mOdometry.update(mPigeon.getRotation2d(), getWheelDistances()[0], getWheelDistances()[1]);
-  }
-
-  public void resetPoseAndGyro(Pose2d pose){
-    mPigeon.setYaw(pose.getRotation().getDegrees());
-    mOdometry.resetPosition(pose.getRotation(), getWheelDistances()[0], getWheelDistances()[1], pose);
+    mField.setRobotPose(mOdometry.getPoseMeters());
   }
 
   //Everything simulation...
@@ -236,6 +239,11 @@ public class Drivetrain extends SubsystemBase {
       KitbotWheelSize.kSixInch.value,
       null
     );
+  }
+
+  public void resetPoseAndGyro(Pose2d pose){
+    mPigeon.setYaw(pose.getRotation().getDegrees());
+    mOdometry.resetPosition(pose.getRotation(), getWheelDistances()[0], getWheelDistances()[1], pose);
   }
 
   @Override
@@ -258,17 +266,18 @@ public class Drivetrain extends SubsystemBase {
     mPigeonSim.setRawHeading(mDrivetrainSim.getHeading().getDegrees());
 
   }
+  @Override
+  public void periodic() {
 
-  public DifferentialDriveKinematics getKinematics() {
+    updateOdometry();
+  }
+
+
+public DifferentialDriveKinematics getKinematics() {
     return mKinematics;
 }
 
-  public SimpleMotorFeedforward getFeedforward(){
-    return mFeedForward;
+public SimpleMotorFeedforward getFeedforward(){
+  return mFeedForward;
 }
-
-  @Override
-  public void periodic() {
-    updateOdometry();
-  }
 }

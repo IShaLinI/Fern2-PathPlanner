@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.PivotConstants;
 import frc.robot.controls.Deadbander;
@@ -37,9 +38,12 @@ public class RobotContainer {
 
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
-        -Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboForwardSpeed : Constants.DriveConstants.kNormalForwardSpeed),
-        -Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed)),
-      mDrivetrain)
+        -Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(),0.1) * DriveConstants.kMaxSpeed,
+        -Deadbander.applyLinearScaledDeadband(mDriver.getRawAxis(2), 0.1) * DriveConstants.kMaxTurnSpeed,
+        mDriver.leftBumper().getAsBoolean()
+      ),
+      mDrivetrain
+    )
     );
 
     mOperator.povRight().onTrue(

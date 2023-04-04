@@ -22,10 +22,10 @@ public class Constants {
     public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60d);
     public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI); 
     
-    public static double kTurboForwardSpeed = kMaxSpeed;
-    public static double kNormalForwardSpeed = kMaxSpeed * 0.6;
-    public static double kTurboTurningSpeed = kMaxTurnSpeed;
-    public static double kNormalTurningSpeed = kMaxTurnSpeed * 0.6;
+    public static double kTurboForwardSpeed = 1;
+    public static double kNormalForwardSpeed = 0.6;
+    public static double kTurboTurningSpeed = 1;
+    public static double kNormalTurningSpeed = 0.2;
 
     public static enum FrontState {
      

@@ -68,7 +68,7 @@ public class AutoCommands {
 
         autoChooser = new SendableChooser<>();
         autoChooser.addOption("Nothing", new PrintCommand("No auto selected"));
-        autoChooser.addOption("Test", makeAuto("Test"));
+        autoChooser.addOption("New Path", makeAuto("New Path"));
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 
