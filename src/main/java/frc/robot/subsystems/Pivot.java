@@ -31,8 +31,8 @@ public class Pivot extends SubsystemBase {
 
     public Pivot() {
 
-        mMaster = new WPI_TalonFX(CAN.kRightPivot);
-        mSlave = new WPI_TalonFX(CAN.kLeftPivot);
+        mMaster = new WPI_TalonFX(CAN.kFrontPivot);
+        mSlave = new WPI_TalonFX(CAN.kBackPivot);
 
         mEncoder = new DutyCycleEncoder(9);
         mPID = new PIDController(2.5 / 20d, 0, 0);

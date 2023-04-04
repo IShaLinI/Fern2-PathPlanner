@@ -184,8 +184,14 @@ public class Drivetrain extends SubsystemBase {
     final double rightOutput = 
       mPIDController.calculate(getWheelVelocities().rightMetersPerSecond, speeds.rightMetersPerSecond);
 
-      mFrontLeft.setVoltage(MathUtil.clamp(leftOutput + leftFeedforward, -12, 12));
-      mFrontRight.setVoltage(MathUtil.clamp(rightOutput + rightFeedforward, -12, 12));
+      setVoltages(leftOutput + leftFeedforward,rightOutput + rightFeedforward);
+  }
+
+  public void setVoltages(double leftVolts, double rightVolts){
+    
+    mFrontLeft.setVoltage(MathUtil.clamp(leftVolts, -12, 12));
+    mFrontRight.setVoltage(MathUtil.clamp(rightVolts, -12, 12));
+
   }
 
   public void drive(double xSpeed, double rot) {
@@ -213,6 +219,11 @@ public class Drivetrain extends SubsystemBase {
 
   public void updateOdometry() {
     mOdometry.update(mPigeon.getRotation2d(), getWheelDistances()[0], getWheelDistances()[1]);
+  }
+
+  public void resetPoseAndGyro(Pose2d pose){
+    mPigeon.setYaw(pose.getRotation().getDegrees());
+    mOdometry.resetPosition(pose.getRotation(), getWheelDistances()[0], getWheelDistances()[1], pose);
   }
 
   //Everything simulation...
@@ -247,6 +258,15 @@ public class Drivetrain extends SubsystemBase {
     mPigeonSim.setRawHeading(mDrivetrainSim.getHeading().getDegrees());
 
   }
+
+  public DifferentialDriveKinematics getKinematics() {
+    return mKinematics;
+}
+
+  public SimpleMotorFeedforward getFeedforward(){
+    return mFeedForward;
+}
+
   @Override
   public void periodic() {
     updateOdometry();

@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.auto.PIDConstants;
+
 import edu.wpi.first.math.util.Units;
 
 public class Constants {
@@ -13,9 +15,12 @@ public class Constants {
     public static double kTrackwidth = Units.inchesToMeters(19);
     public static double kDistancePerPulse = (1.0/2048d) * (Units.inchesToMeters(6) * Math.PI) * (1/10.71);
 
+    public static PIDConstants mTrajConstants = new PIDConstants(0, 0, 0);
+    public static double kTrajectoryMaxSpeed = 3;
+	  public static double kTrajectoryMaxAccel = 3;
+    
     public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60d);
     public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI); 
-    //public static double kMaxTurnSpeed = 1;
     
     public static double kTurboForwardSpeed = kMaxSpeed;
     public static double kNormalForwardSpeed = kMaxSpeed * 0.6;
@@ -49,8 +54,8 @@ public class Constants {
           public static int kBackRight = 4;
           public static int kPigeon = 5;
           public static int kIntake = 6;
-          public static int kRightPivot = 7;
-          public static int kLeftPivot = 8;
+          public static int kFrontPivot = 7;
+          public static int kBackPivot = 8;
 
         }
     }
@@ -66,6 +71,7 @@ public class Constants {
           GRAB(-kInSpeed),
           RELEASE(kOutSpeed),
           L1RELEASE(0.30),
+          L2RELEASE(0.60),
           IDLE(-kS/12),
           STOP(0),
           STARTING(0);

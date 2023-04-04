@@ -4,11 +4,7 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -27,29 +23,24 @@ public class RobotContainer {
   private final Drivetrain mDrivetrain = new Drivetrain();
   private final Intake mIntake = new Intake();
   private final Pivot mPivot = new Pivot();
+
+  private AutoCommands mAutoCommands = new AutoCommands(mDrivetrain, mIntake, mPivot);
+
   private CommandXboxController mDriver = new CommandXboxController(0);
   private CommandXboxController mOperator = new CommandXboxController(1);
 
-  private SendableChooser<SequentialCommandGroup[]> mAutoChooser = new SendableChooser<>();
-
-  private Field2d mField = new Field2d();
-
   public RobotContainer() {
-
-    SmartDashboard.putData(mField);
     configureBindings();
-
   }
 
   private void configureBindings() {
-    
+
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
         -Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboForwardSpeed : Constants.DriveConstants.kNormalForwardSpeed),
-        -Deadbander.applyLinearScaledDeadband(mDriver.getRawAxis(2), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed)),
+        -Deadbander.applyLinearScaledDeadband(mDriver.getRightX(), 0.1)* (mDriver.leftTrigger().getAsBoolean() ? Constants.DriveConstants.kTurboTurningSpeed : Constants.DriveConstants.kNormalTurningSpeed)),
       mDrivetrain)
     );
-
 
     mOperator.povRight().onTrue(
       new InstantCommand(
@@ -126,10 +117,6 @@ public class RobotContainer {
       mIntake.changeState(IntakeConstants.State.STOP)
     );
 
-
-
-
-
     mOperator.povUp().onTrue(
       mPivot.changeState(PivotConstants.State.L2)
     );
@@ -138,35 +125,11 @@ public class RobotContainer {
       mPivot.changeState(PivotConstants.State.L1)
     );
 
-
-    configureAutoChooser();
-
   }
 
-  public void updateField(){
+  public Command getAutonomousCommand() {
 
-    mField.setRobotPose(mDrivetrain.getRobotPosition());
+    return mAutoCommands.getAuto();
 
   }
-
-  
-
-public void configureAutoChooser() {
-  mAutoChooser.setDefaultOption("Nothing", new SequentialCommandGroup[]{null, null});
-  
-  SmartDashboard.putData(mAutoChooser);
-
 }
-
-public SequentialCommandGroup getAutonomousCommand() {
-        
-        int alliance = 0;
-        if(DriverStation.getAlliance() == Alliance.Blue){
-          alliance = 0;
-        }else{
-          alliance = 1;
-        }
-
-         return mAutoChooser.getSelected()[alliance];
-      }
-    }
