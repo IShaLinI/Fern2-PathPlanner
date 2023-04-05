@@ -4,6 +4,8 @@ import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Timer;
@@ -39,7 +41,6 @@ public class Pivot extends SubsystemBase {
        
         Timer.delay(2);
         
-        mMaster.setInverted(InvertType.InvertMotorOutput);
         mMaster.setSelectedSensorPosition(0);
 
         mEncoder.setPositionOffset(PivotConstants.kThroughboreOffset);
@@ -52,14 +53,14 @@ public class Pivot extends SubsystemBase {
     public void configureMotor() {
 
         mMaster.configFactoryDefault();
-        mMaster.setNeutralMode(NeutralMode.Coast);
+        mMaster.setNeutralMode(NeutralMode.Brake);
 
         mMaster.configVoltageCompSaturation(10);
         mMaster.enableVoltageCompensation(true);
         mMaster.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 25, 25, 0));
     
         mSlave.configFactoryDefault();
-        mSlave.setNeutralMode(NeutralMode.Coast);
+        mSlave.setNeutralMode(NeutralMode.Brake);
 
         mSlave.configVoltageCompSaturation(10);
         mSlave.enableVoltageCompensation(true);
@@ -71,14 +72,14 @@ public class Pivot extends SubsystemBase {
     }
 
     public void runPivot() {
-        //CLAMP
-        //mMaster.set(mPID.calculate(getAngle(), mCurrentState.angle)/12);
+
+        mMaster.set(MathUtil.clamp(mPID.calculate(getAngle(), mCurrentState.angle)/12, -0.8, 0.8));
         
     }
 
     public boolean atTarget() {
 
-        double tolerance = 0.5; 
+        double tolerance = 5; 
 
         return (Math.abs(getAngle() - mCurrentState.angle + trimVal) < tolerance);
 
@@ -121,7 +122,7 @@ public class Pivot extends SubsystemBase {
     @Override
     public void periodic() {
 
-        //runPivot();
+        runPivot();
 
         SmartDashboard.putNumber("TBE Raw", mEncoder.getAbsolutePosition());
         SmartDashboard.putNumber("TBE Degrees", getThroughBoreAngle());
@@ -130,8 +131,9 @@ public class Pivot extends SubsystemBase {
         SmartDashboard.putBoolean("At Setpoint", atTarget());
         SmartDashboard.putNumber("Motor Voltage", mMaster.get() * 12);
         SmartDashboard.putNumber("Set Point", mCurrentState.angle);
-        SmartDashboard.putNumber("output",-mPID.calculate(getAngle(), mCurrentState.angle)/12);
         SmartDashboard.putNumber("Error", mPID.getPositionError());
+        SmartDashboard.putNumber("front raw encoder", mMaster.getSelectedSensorPosition());
+        SmartDashboard.putNumber("back raw encoder", mSlave.getSelectedSensorPosition());
 
 
     }

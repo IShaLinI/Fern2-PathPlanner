@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
@@ -56,7 +56,7 @@ public class RobotContainer {
     mOperator.y().whileTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.FLOOR),
-        new WaitCommand(0.25),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.GRAB)
       )
     );
@@ -64,6 +64,7 @@ public class RobotContainer {
     mOperator.y().onFalse(
       new ParallelCommandGroup(
         mIntake.changeState(IntakeConstants.State.IDLE),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
         mPivot.changeState(PivotConstants.State.CARRY)
       )
     );
@@ -71,6 +72,7 @@ public class RobotContainer {
     mOperator.b().whileTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.L1),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.L1RELEASE)
       )
     );
@@ -85,6 +87,7 @@ public class RobotContainer {
     mOperator.x().whileTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.SUBSTATION),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.GRAB)
       )
     );
@@ -99,7 +102,7 @@ public class RobotContainer {
     mOperator.a().whileTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.L2),
-        new WaitCommand(0.0),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.RELEASE)
       )
     );
@@ -116,6 +119,14 @@ public class RobotContainer {
     );
 
     mOperator.rightTrigger().onFalse(
+      mIntake.changeState(IntakeConstants.State.STOP)
+    );
+
+    mOperator.leftTrigger().onTrue(
+      mIntake.changeState(IntakeConstants.State.RELEASE)
+    );
+
+    mOperator.leftTrigger().onFalse(
       mIntake.changeState(IntakeConstants.State.STOP)
     );
 

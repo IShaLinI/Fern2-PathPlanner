@@ -31,7 +31,7 @@ public class Intake extends SubsystemBase {
   }
 
   private void runIntake(){
-    mMotor.set(mCurrentState.speed * 0.1);
+    mMotor.set(mCurrentState.speed);
   }
 
   public Command changeState(State state){
