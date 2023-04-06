@@ -62,18 +62,15 @@ public class Pivot extends SubsystemBase {
     public void configureMotor() {
 
         mMaster.configFactoryDefault();
-        mMaster.setNeutralMode(NeutralMode.Brake);
-
-        mMaster.configVoltageCompSaturation(10);
-        mMaster.enableVoltageCompensation(true);
-        mMaster.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 25, 25, 0));
-    
         mSlave.configFactoryDefault();
+
+        mMaster.setNeutralMode(NeutralMode.Brake);
         mSlave.setNeutralMode(NeutralMode.Brake);
 
-        mSlave.configVoltageCompSaturation(10);
-        mSlave.enableVoltageCompensation(true);
-        mSlave.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 25, 25, 0));
+
+        SupplyCurrentLimitConfiguration mPivotCurrentLimit = new SupplyCurrentLimitConfiguration(true, 25, 25, 0);
+        mMaster.configSupplyCurrentLimit(mPivotCurrentLimit);
+        mSlave.configSupplyCurrentLimit(mPivotCurrentLimit);
         
         mSlave.follow(mMaster);
         mSlave.setInverted(InvertType.OpposeMaster);
@@ -143,16 +140,15 @@ public class Pivot extends SubsystemBase {
 
         runPivot();
 
-        SmartDashboard.putNumber("TBE Raw", mEncoder.getAbsolutePosition());
-        SmartDashboard.putNumber("TBE Degrees", getThroughBoreAngle());
-        SmartDashboard.putNumber("Falcon Degrees", getAngle());
-        SmartDashboard.putNumber("Falcon Offset", falconOffset);
-        SmartDashboard.putBoolean("At Setpoint", atTarget());
-        SmartDashboard.putNumber("Motor Voltage", mMaster.get() * 12);
-        SmartDashboard.putNumber("Set Point", mCurrentState.angle);
-        SmartDashboard.putNumber("Error", mPID.getPositionError());
-        SmartDashboard.putNumber("front raw encoder", mMaster.getSelectedSensorPosition());
-        SmartDashboard.putNumber("back raw encoder", mSlave.getSelectedSensorPosition());
+        SmartDashboard.putNumber("Pivot/TBE Raw", mEncoder.getAbsolutePosition());
+        SmartDashboard.putNumber("Pivot/TBE Degrees", getThroughBoreAngle());
+        SmartDashboard.putNumber("Pivot/Falcon Degrees", getAngle());
+        SmartDashboard.putNumber("Pivot/Falcon Offset", falconOffset);
+        SmartDashboard.putBoolean("Pivot/At Setpoint", atTarget());
+        SmartDashboard.putNumber("Pivot/Motor Voltage", mMaster.get() * 10);
+        SmartDashboard.putNumber("Pivot/Set Point", mCurrentState.angle);
+        SmartDashboard.putNumber("Pivot/Error", mPID.getPositionError());
+
         SmartDashboard.putString("States/Pivot", mCurrentState.toString());
 
     }

@@ -15,8 +15,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
@@ -36,13 +34,18 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
+
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.ModState;
-import frc.robot.Constants.DriveConstants.FrontState;
+import frc.robot.Constants.DriveConstants.SpeedState;
+import frc.robot.Constants.DriveConstants.DirState;
 import frc.robot.Constants.RobotConstants.CAN;
+import frc.util.field.AllianceTransform;
+import frc.util.motor.SimpleCurrentLimit;
 
 public class Drivetrain extends SubsystemBase {
 
@@ -58,8 +61,7 @@ public class Drivetrain extends SubsystemBase {
 
   private final BasePigeonSimCollection mPigeonSim = mPigeon.getSimCollection();
 
-  private final DifferentialDriveKinematics mKinematics = new DifferentialDriveKinematics(
-      Constants.DriveConstants.kTrackwidth);
+  private final DifferentialDriveKinematics mKinematics = new DifferentialDriveKinematics(DriveConstants.kTrackwidth);
 
   private final DifferentialDriveOdometry mOdometry;
 
@@ -69,9 +71,10 @@ public class Drivetrain extends SubsystemBase {
   private Field2d mField = new Field2d();
 
   private FieldObject2d mIntakeVisual = mField.getObject("Intake");
+  
 
-  private FrontState mCurrentState = FrontState.FORWARD;
-  private ModState mCurrentMod = ModState.NORMAL;
+  private DirState mCurrentDirState = DirState.FORWARD;
+  private SpeedState mCurrentSpeedState = SpeedState.NORMAL;
 
   public static final LinearSystem<N2, N2, N2> mDrivetrainPlant = LinearSystemId.identifyDrivetrainSystem(
       2.2195, // Linear kV
@@ -95,8 +98,6 @@ public class Drivetrain extends SubsystemBase {
     mOdometry = new DifferentialDriveOdometry(mPigeon.getRotation2d(), 0, 0);
 
     SmartDashboard.putData("Field", mField);
-
-    mCurrentState = FrontState.FORWARD;
 
   }
 
@@ -123,10 +124,10 @@ public class Drivetrain extends SubsystemBase {
     mFrontLeft.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     mFrontRight.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
 
-    mFrontLeft.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 30, 30, 0));
-    mFrontRight.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 30, 30, 0));
-    mBackLeft.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 30, 30, 0));
-    mBackRight.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 30, 30, 0));
+    mFrontLeft.configSupplyCurrentLimit(DriveConstants.kDriveCurrentLimit);
+    mFrontRight.configSupplyCurrentLimit(DriveConstants.kDriveCurrentLimit);
+    mBackLeft.configSupplyCurrentLimit(DriveConstants.kDriveCurrentLimit);
+    mBackRight.configSupplyCurrentLimit(DriveConstants.kDriveCurrentLimit);
 
     mFrontLeft.configVelocityMeasurementPeriod(SensorVelocityMeasPeriod.Period_1Ms);
     mFrontLeft.configVelocityMeasurementWindow(1);
@@ -204,124 +205,98 @@ public class Drivetrain extends SubsystemBase {
   public void drive(double xSpeed, double rot) {
 
     var wheelSpeeds = new ChassisSpeeds(
-        xSpeed * mCurrentMod.xMod * mCurrentState.direction,
+        xSpeed * mCurrentSpeedState.xMod * mCurrentDirState.direction,
         0,
-        rot * mCurrentMod.rotMod * mCurrentState.direction);
+        rot * mCurrentSpeedState.rotMod * mCurrentDirState.direction);
 
     setSpeeds(mKinematics.toWheelSpeeds(wheelSpeeds));
 
   }
 
   public Rotation2d getAngle() {
-    return mPigeon.getRotation2d().times(-1);
-  }
-
-  public void setGyro(double angle) {
-    mPigeon.setAccumZAngle(angle);
+    return mPigeon.getRotation2d();
   }
 
   public class RotateRelative extends CommandBase {
 
     private Rotation2d mAngle;
-    private Rotation2d mSetpoint;
-    private double kS = 0.05;
+
+    private double kS = (RobotBase.isReal()) ? 0.05 : 0;
+    private double kP = 1d/30;
+
+    private PIDController mPID = new PIDController(kP, 0, 0);
+
     private double mError;
 
     public RotateRelative(Rotation2d angle) {
       mAngle = angle;
     }
 
+    public RotateRelative(double angle) {
+      mAngle = Rotation2d.fromDegrees(angle);
+    }
+
     @Override
     public void initialize() {
-      mSetpoint = getAngle().rotateBy(mAngle);
+      mPIDController.setSetpoint(getAngle().rotateBy(mAngle).getDegrees());
     }
 
     @Override
     public void execute() {
-      double error = (mSetpoint.getDegrees() - getAngle().getDegrees());
-      double output = MathUtil.clamp((error / 270 + kS), -0.25, 0.25);
 
-      mFrontLeft.set(output);
-      mFrontRight.set(output);
-      mBackLeft.set(output);
-      mBackRight.set(output);
+      double output = mPID.calculate(getAngle().getDegrees());
+      output += (output > 0) ? kS : -kS;
 
-      SmartDashboard.putNumber("Setpoint", mSetpoint.getDegrees());
-      SmartDashboard.putNumber("Current Angle", getAngle().getDegrees());
-      SmartDashboard.putNumber("Error", mError);
+      setVoltages(output, output);
 
-      mError = error;
+      SmartDashboard.putNumber("RotateRelative/Setpoint", mPID.getSetpoint());
+      SmartDashboard.putNumber("RotateRelative/Current Angle", getAngle().getDegrees());
+      SmartDashboard.putNumber("RotateRelative/Position Error", mPID.getPositionError());
+      SmartDashboard.putNumber("RotateRelative/Velocity Error", mPID.getVelocityError());
+      SmartDashboard.putNumber("RotateRelative/Output", output);
+
+      CommandScheduler.getInstance().schedule(new PrintCommand("running"));
+
     }
 
     @Override
     public boolean isFinished() {
       return false;
     }
+  }
+
+  public Command RotateTo(double angle){
+    double robotAngle = getAngle().getDegrees();
+    robotAngle = (angle % 360 + 360) % 360;
+
+    double error = angle - robotAngle;
+
+    return new RotateRelative(error);
+
   }
 
   public double getPitch() {
-    return mPigeon.getPitch();
+    return mPigeon.getRoll(); //Pigeon is mounted wrong
   }
 
-  public class ChargeStationAuto extends CommandBase {
-
-    private double mPower = 0.4;
-
-    @Override
-    public void initialize() {
-    }
-
-    @Override
-    public void execute() {
-
-      if (getPitch() > 0) {
-        mFrontLeft.set(mPower);
-        mFrontRight.set(mPower);
-        mBackLeft.set(mPower);
-        mBackRight.set(mPower);
-      } else {
-        mFrontLeft.set(-mPower);
-        mFrontRight.set(-mPower);
-        mBackLeft.set(-mPower);
-        mBackRight.set(-mPower);
-      }
-
-      mFrontLeft.set(mPower);
-      mFrontRight.set(mPower);
-
-    }
-
-    @Override
-    public boolean isFinished() {
-
-      return false;
-
-    }
-
-  }
-
-  public Command changeState(FrontState frontState) {
+  public Command changeState(DirState frontState) {
     return new InstantCommand(
-        () -> mCurrentState = frontState);
+        () -> mCurrentDirState = frontState);
   }
-
-  public Command changeSpeedMod(ModState modState) {
+  public Command changeState(SpeedState modState) {
     return new InstantCommand(
-        () -> mCurrentMod = modState);
+        () -> mCurrentSpeedState = modState);
   }
 
   public Pose2d getRobotPosition() {
     return mOdometry.getPoseMeters();
   }
 
-  public double getHeading() {
-    return -mPigeon.getYaw();
-  }
-
   public void updateOdometry() {
     mOdometry.update(mPigeon.getRotation2d(), getWheelDistances()[0], getWheelDistances()[1]);
     mField.setRobotPose(mOdometry.getPoseMeters());
 
+    //Intake Visual
     Pose2d robotPose = mOdometry.getPoseMeters();
 
     Pose2d intakePose = new Pose2d(
@@ -329,19 +304,8 @@ public class Drivetrain extends SubsystemBase {
       robotPose.getY() - 0.4 * Math.cos(Units.degreesToRadians(-robotPose.getRotation().getDegrees())),
       robotPose.getRotation()
     );
-
     mIntakeVisual.setPose(intakePose);
-  }
 
-  // Everything simulation...
-  public void resetSimulation() {
-    mDrivetrainSim = new DifferentialDrivetrainSim( // Simulation
-        mDrivetrainPlant,
-        DCMotor.getFalcon500(2),
-        KitbotGearing.k10p71.value,
-        DriveConstants.kTrackwidth,
-        KitbotWheelSize.kSixInch.value,
-        null);
   }
 
   public void resetEncoders() {
@@ -359,8 +323,7 @@ public class Drivetrain extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
 
-    mDrivetrainSim.setInputs(mFrontLeft.get() * RobotController.getInputVoltage(),
-        mFrontRight.get() * RobotController.getInputVoltage());
+    mDrivetrainSim.setInputs(mFrontLeft.get() * RobotController.getInputVoltage(), mFrontRight.get() * RobotController.getInputVoltage());
 
     mDrivetrainSim.update(0.02);
 
@@ -380,24 +343,15 @@ public class Drivetrain extends SubsystemBase {
   @Override
   public void periodic() {
 
-    SmartDashboard.putNumber("drive state", mCurrentState.direction);
-    SmartDashboard.putNumber("encoder distance inches", Units.metersToInches(getWheelDistances()[0]));
-    SmartDashboard.putNumber("gyro angle", mPigeon.getAngle());
-    SmartDashboard.putNumber("yaw", mPigeon.getYaw());
+    SmartDashboard.putNumber("Drivetrain/Left Distance Meters", getWheelDistances()[0]);
+    SmartDashboard.putNumber("Drivetrain/Right Distance Meters", getWheelDistances()[1]);
+    SmartDashboard.putNumber("Drivetrain/Robot Angle", getAngle().getDegrees());
+    SmartDashboard.putNumber("Drivetrain/Robot Pitch", getPitch());
     
-
-    SmartDashboard.putString("States/Direction", mCurrentState.toString());
-    SmartDashboard.putString("States/Speed", mCurrentMod.toString());
-
+    SmartDashboard.putString("States/DriveDirection", mCurrentDirState.toString());
+    SmartDashboard.putString("States/DriveSpeed", mCurrentSpeedState.toString());
 
     updateOdometry();
   }
 
-  public DifferentialDriveKinematics getKinematics() {
-    return mKinematics;
-  }
-
-  public SimpleMotorFeedforward getFeedforward() {
-    return mFeedForward;
-  }
 }

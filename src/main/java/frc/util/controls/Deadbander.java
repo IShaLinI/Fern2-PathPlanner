@@ -1,4 +1,4 @@
-package frc.robot.controls;
+package frc.util.controls;
 
 public class Deadbander {
      /**

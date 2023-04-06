@@ -4,8 +4,17 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.auto.PIDConstants;
+import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import frc.util.field.AllianceTransform;
+import frc.util.motor.SimpleCurrentLimit;
 
 public class Constants {
 
@@ -13,24 +22,13 @@ public class Constants {
 
     public static double kTrackwidth = Units.inchesToMeters(19);
     public static double kDistancePerPulse = (1.0/2048d) * (Units.inchesToMeters(6) * Math.PI) * (1/10.71);
-
-    public static PIDConstants mTrajConstants = new PIDConstants(0.5, 0, 0);
-    public static double kTrajectoryMaxSpeed = 1;
-	  public static double kTrajectoryMaxAccel = 1;
     
     public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60d);
-    public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI); 
-    
-    public static double kTurboTurningSpeed = 0.8;
-    public static double kNormalTurningSpeed = 0.2;
-    public static double kTurboForwardSpeed = 1;
-    public static double kNormalForwardSpeed = 0.8;
+    public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI);
 
-    public static double kSlowForwardSpeed = 0.6;
-    public static double kSlowTurningSpeed = 0.2;
+    public static SupplyCurrentLimitConfiguration kDriveCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(30);
 
-
-    public static enum FrontState {
+    public static enum DirState {
      
       FORWARD(1),
       REVERSE(-1);
@@ -41,34 +39,35 @@ public class Constants {
        * @param direction Motor Percentage
        */
 
-      FrontState(double direction) {
+      DirState(double direction) {
         this.direction = direction;
       }
     }
+
+    public static enum SpeedState {
+     
+      TURBO(1, 0.8),
+      NORMAL(0.8, 0.2),
+      SLOW(0.6, 0.2);
+  
+      public final double xMod;
+      public final double rotMod;
+  
+      /**
+       * @param modifier Turbo or Slow
+       */
+  
+      SpeedState(double xMod, double rotMod) {
+        this.xMod = xMod;
+        this.rotMod = rotMod;
+      }
+    }
+
    }
 
-   public static enum ModState {
-     
-    TURBO(DriveConstants.kTurboForwardSpeed, DriveConstants.kTurboTurningSpeed),
-    NORMAL(DriveConstants.kNormalForwardSpeed, DriveConstants.kNormalTurningSpeed),
-    SLOW(DriveConstants.kSlowForwardSpeed, DriveConstants.kSlowTurningSpeed);
 
-    public final double xMod;
-    public final double rotMod;
-
-    /**
-     * @param modifier Turbo or Slow
-     */
-
-    ModState(double xMod, double rotMod) {
-      this.xMod = xMod;
-      this.rotMod = rotMod;
-    }
-  }
 
     public static class RobotConstants{
-        public static double maxVoltage = 15;
-        
         public static class CAN {
           public static int kFrontLeft = 1;
           public static int kBackLeft = 2;
@@ -80,14 +79,40 @@ public class Constants {
           public static int kBackPivot = 8;
 
         }
+
+        public static enum StartingPose {
+     
+          BLUE_SUB(new Pose2d(new Translation2d(2.2, 4.45), Rotation2d.fromDegrees(-90))),
+          BLUE_MID(new Pose2d(new Translation2d(2.2, 2.75), Rotation2d.fromDegrees(-90))),
+          BLUE_BUMP(new Pose2d(new Translation2d(2.2, 1), Rotation2d.fromDegrees(-90))),
+
+          RED_SUB(AllianceTransform.flipAlliance(BLUE_SUB.pose)),
+          RED_MID(AllianceTransform.flipAlliance(BLUE_MID.pose)),
+          RED_BUMP(AllianceTransform.flipAlliance(BLUE_BUMP.pose)),
+
+          SUB((DriverStation.getAlliance() == Alliance.Blue) ? BLUE_SUB.pose : RED_SUB.pose),
+          MID((DriverStation.getAlliance() == Alliance.Blue) ? BLUE_MID.pose : RED_MID.pose),
+          BUMP((DriverStation.getAlliance() == Alliance.Blue) ? BLUE_BUMP.pose : RED_BUMP.pose);
+    
+          public final Pose2d pose;
+    
+          /**
+           * @param direction Motor Percentage
+           */
+    
+          StartingPose(Pose2d pose) {
+            this.pose = pose;
+          }
+        }
+
     }
 
     public static class IntakeConstants {
     
         public static final double kInSpeed = 0.25;
         public static final double kOutSpeed = 0.40;
-    
-        public static final double kS = 1;
+
+        public static SupplyCurrentLimitConfiguration kIntakeCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(30);
     
         public static enum State {
           
@@ -96,9 +121,7 @@ public class Constants {
           L1RELEASE(0.1),
           L2RELEASE(0.15),
           L3RELEASE(0.25),
-          IDLE(-kS/12),
-          STOP(0),
-          STARTING(0);
+          STOP(0);
     
           public final double speed;
     

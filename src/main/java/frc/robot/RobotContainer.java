@@ -14,10 +14,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.PivotConstants;
-import frc.robot.controls.Deadbander;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Pivot;
+import frc.util.controls.Deadbander;
 
 public class RobotContainer {
 
@@ -41,136 +41,73 @@ public class RobotContainer {
         Deadbander.applyLinearScaledDeadband(-mDriver.getLeftY(),0.1) * DriveConstants.kMaxSpeed,
         Deadbander.applyLinearScaledDeadband(-mDriver.getRightX(), 0.1) * DriveConstants.kMaxTurnSpeed
       ),
-      mDrivetrain
-    )
-    );
-
-    mDriver.povLeft().onTrue(
-      new InstantCommand(
-        mDrivetrain::resetEncoders)
+        mDrivetrain
+      )
     );
     
     mDriver.povUp().onTrue(
-      mDrivetrain.changeState(DriveConstants.FrontState.FORWARD)
+      mDrivetrain.changeState(DriveConstants.DirState.FORWARD)
     );
 
     mDriver.povDown().onTrue(
-      mDrivetrain.changeState(DriveConstants.FrontState.REVERSE)
+      mDrivetrain.changeState(DriveConstants.DirState.REVERSE)
     );
 
     mDriver.leftTrigger().onTrue(
-      mDrivetrain.changeSpeedMod(Constants.ModState.TURBO)
+      mDrivetrain.changeState(DriveConstants.SpeedState.TURBO)
     ).onFalse(
-      mDrivetrain.changeSpeedMod(Constants.ModState.NORMAL)
+      mDrivetrain.changeState(DriveConstants.SpeedState.NORMAL)
     );
 
     mDriver.rightTrigger().onTrue(
-      mDrivetrain.changeSpeedMod(Constants.ModState.SLOW)
+      mDrivetrain.changeState(DriveConstants.SpeedState.SLOW)
     ).onFalse(
-      mDrivetrain.changeSpeedMod(Constants.ModState.NORMAL)
+      mDrivetrain.changeState(DriveConstants.SpeedState.NORMAL)
     );
 
     mDriver.rightBumper().onTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.SUBSTATION),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.GRAB)
-      )
+      mAutoCommands.getEvent("FireL1")
     ).onFalse(
-      new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
+      mAutoCommands.getEvent("Carry")
     );
 
     mDriver.leftBumper().onTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.L1),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.L1RELEASE)
-      )
+      mAutoCommands.getEvent("FireL1")
     ).onFalse(
-      new ParallelCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
+      mAutoCommands.getEvent("Carry")
     );
 
     //#endregion
     //#region Operator Controls
-
-    mOperator.povRight().onTrue(
-      new InstantCommand(
-        mPivot::zeroEncoder,
-        mPivot
-      )
-    );
     
     mOperator.x().onTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.SUBSTATION),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.GRAB)
-      )
+      mAutoCommands.getEvent("SubPickup")
     ).onFalse(
-      new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
+      mAutoCommands.getEvent("Carry")
     );
   
     mOperator.rightBumper().onTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.FLOOR),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.GRAB)
-      )
+      mAutoCommands.getEvent("FloorPickup")
     ).onFalse(
-      new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
+      mAutoCommands.getEvent("Carry")
     );
     
     mOperator.y().onTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.L1),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.L1RELEASE)
-      )
+      mAutoCommands.getEvent("FireL1")
     ).onFalse(
-      new ParallelCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
+      mAutoCommands.getEvent("Carry")
     );
 
     mOperator.b().onTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.L2),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.L2RELEASE)
-      )
+      mAutoCommands.getEvent("FireL2")
     ).onFalse(
-      new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.IDLE),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
+      mAutoCommands.getEvent("Carry")
     );
 
-    mOperator.a().whileTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.L3),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.L3RELEASE)
-      )
-    ).whileFalse(
-      new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.IDLE),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
+    mOperator.a().onTrue(
+      mAutoCommands.getEvent("FireL3")
+    ).onFalse(
+      mAutoCommands.getEvent("Carry")
     );
 
     //#endregion

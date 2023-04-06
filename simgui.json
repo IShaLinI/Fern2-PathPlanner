@@ -1,4 +1,13 @@
 {
+  "HALProvider": {
+    "Other Devices": {
+      "Talon FX[1]": {
+        "header": {
+          "open": true
+        }
+      }
+    }
+  },
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
@@ -13,7 +22,17 @@
           "visible": true
         }
       },
+      "/SmartDashboard/Auto Chooser": {
+        "window": {
+          "visible": true
+        }
+      },
       "/SmartDashboard/Field": {
+        "FlippedIntake": {
+          "arrows": false,
+          "length": 0.5,
+          "width": 0.125
+        },
         "Intake": {
           "arrows": false,
           "length": 0.5,
@@ -29,6 +48,16 @@
         "window": {
           "visible": true
         }
+      }
+    }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "SmartDashboard": {
+        "RotateRelative": {
+          "open": true
+        },
+        "open": true
       }
     }
   }
