@@ -21,16 +21,14 @@ public class Constants {
     public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60d);
     public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI); 
     
-    public static double kTurboForwardSpeed = 0.8;
-    public static double kNormalForwardSpeed = 0.4;
-    public static double kTurboTurningSpeed = 1;
-    public static double kNormalTurningSpeed = 0.8;
+    public static double kTurboTurningSpeed = 0.8;
+    public static double kNormalTurningSpeed = 0.4;
+    public static double kTurboForwardSpeed = 1;
+    public static double kNormalForwardSpeed = 0.8;
 
-    // public static double kTurboForwardSpeed = 0.2;
-    // public static double kNormalForwardSpeed = 0.2;
+    public static double kSlowForwardSpeed = 0.6;
+    public static double kSlowTurningSpeed = 0.2;
 
-    // public static double kTurboTurningSpeed = 0.8;
-    // public static double kNormalTurningSpeed = 0.6;
 
     public static enum FrontState {
      
@@ -48,6 +46,25 @@ public class Constants {
       }
     }
    }
+
+   public static enum ModState {
+     
+    TURBO(DriveConstants.kTurboForwardSpeed, DriveConstants.kTurboTurningSpeed),
+    NORMAL(DriveConstants.kNormalForwardSpeed, DriveConstants.kNormalTurningSpeed),
+    SLOW(DriveConstants.kSlowForwardSpeed, DriveConstants.kSlowTurningSpeed);
+
+    public final double xMod;
+    public final double rotMod;
+
+    /**
+     * @param modifier Turbo or Slow
+     */
+
+    ModState(double xMod, double rotMod) {
+      this.xMod = xMod;
+      this.rotMod = rotMod;
+    }
+  }
 
     public static class RobotConstants{
         public static double maxVoltage = 15;

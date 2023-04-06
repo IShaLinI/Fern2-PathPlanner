@@ -37,6 +37,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ModState;
 import frc.robot.Constants.DriveConstants.FrontState;
 import frc.robot.Constants.RobotConstants.CAN;
 
@@ -65,6 +66,7 @@ public class Drivetrain extends SubsystemBase {
   private Field2d mField = new Field2d();
 
   private FrontState mCurrentState;
+  private ModState mCurrentMod;
 
   public static final LinearSystem<N2,N2,N2> mDrivetrainPlant = LinearSystemId.identifyDrivetrainSystem(
     2.2195, //Linear kV
@@ -205,21 +207,21 @@ public class Drivetrain extends SubsystemBase {
     mBackRight.setVoltage(rightVolts);
   }
 
-  public void drive(double xSpeed, double rot, boolean turbo) {
+  public void drive(double xSpeed, double rot, boolean turbo, boolean slow) {
    
     if(turbo){
-      xSpeed *= DriveConstants.kTurboForwardSpeed;
-      rot *= DriveConstants.kTurboTurningSpeed;
+      changeSpeedMod(ModState.TURBO);
+    }else if(slow){
+      changeSpeedMod(ModState.SLOW);
     }else{
-      xSpeed *= DriveConstants.kNormalForwardSpeed;
-      rot *= DriveConstants.kNormalTurningSpeed;
+      changeSpeedMod(ModState.NORMAL);
     }
 
     var wheelSpeeds = 
       new ChassisSpeeds(
-        xSpeed,
+        xSpeed * mCurrentMod.xMod,
         0,
-        rot * mCurrentState.direction
+        rot * mCurrentMod.rotMod * mCurrentState.direction
       );
 
     setSpeeds(mKinematics.toWheelSpeeds(wheelSpeeds));
@@ -318,6 +320,11 @@ public class Drivetrain extends SubsystemBase {
   public Command changeState(FrontState frontState) {
     return new InstantCommand(
       ()-> mCurrentState = frontState);
+  }
+
+  public Command changeSpeedMod(ModState modState) {
+    return new InstantCommand(
+      ()-> mCurrentMod = modState);
   }
 
   public void toggleState() {
