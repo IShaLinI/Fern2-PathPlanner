@@ -178,6 +178,7 @@ public class Pivot extends SubsystemBase {
         SmartDashboard.putNumber("Error", mPID.getPositionError());
         SmartDashboard.putNumber("front raw encoder", mMaster.getSelectedSensorPosition());
         SmartDashboard.putNumber("back raw encoder", mSlave.getSelectedSensorPosition());
+        SmartDashboard.putString("States/Pivot", mCurrentState.toString());
 
     }
 
@@ -185,8 +186,8 @@ public class Pivot extends SubsystemBase {
     public void simulationPeriodic() {
         mArmSim.setInput(mMaster.get() * RobotController.getBatteryVoltage());
         mArmSim.update(0.02);
-        double poseDelta = (Units.radiansPerSecondToRotationsPerMinute(mArmSim.getVelocityRadPerSec()) / 600) * 60d/16d * 20 * 2048;
-        mArmMotorSim.addIntegratedSensorPosition((int)poseDelta);
+        double poseDelta = Units.radiansPerSecondToRotationsPerMinute(mArmSim.getVelocityRadPerSec()) * 1/60 * 1 / PivotConstants.kGearing; //Change in motor rps
+        mArmMotorSim.addIntegratedSensorPosition((int)(poseDelta * (1d / 10) * 2048));
         mArm.setAngle(getAngle() + 90);
 
     }

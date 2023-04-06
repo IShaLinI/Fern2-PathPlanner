@@ -38,8 +38,8 @@ public class RobotContainer {
     //#region Driver Controls
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
-        Deadbander.applyLinearScaledDeadband(mDriver.getRightX(),0.1) * DriveConstants.kMaxSpeed,
-        Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1) * DriveConstants.kMaxTurnSpeed
+        Deadbander.applyLinearScaledDeadband(-mDriver.getLeftY(),0.1) * DriveConstants.kMaxSpeed,
+        Deadbander.applyLinearScaledDeadband(-mDriver.getRightX(), 0.1) * DriveConstants.kMaxTurnSpeed
       ),
       mDrivetrain
     )
@@ -60,10 +60,41 @@ public class RobotContainer {
 
     mDriver.leftTrigger().onTrue(
       mDrivetrain.changeSpeedMod(Constants.ModState.TURBO)
+    ).onFalse(
+      mDrivetrain.changeSpeedMod(Constants.ModState.NORMAL)
     );
 
     mDriver.rightTrigger().onTrue(
       mDrivetrain.changeSpeedMod(Constants.ModState.SLOW)
+    ).onFalse(
+      mDrivetrain.changeSpeedMod(Constants.ModState.NORMAL)
+    );
+
+    mDriver.rightBumper().onTrue(
+      new SequentialCommandGroup(
+        mPivot.changeState(PivotConstants.State.SUBSTATION),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
+        mIntake.changeState(IntakeConstants.State.GRAB)
+      )
+    ).onFalse(
+      new SequentialCommandGroup(
+        mIntake.changeState(IntakeConstants.State.STOP),
+        mPivot.changeState(PivotConstants.State.CARRY)
+      )
+    );
+
+    mDriver.leftBumper().onTrue(
+      new SequentialCommandGroup(
+        mPivot.changeState(PivotConstants.State.L1),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
+        mIntake.changeState(IntakeConstants.State.L1RELEASE)
+      )
+    ).onFalse(
+      new ParallelCommandGroup(
+        mIntake.changeState(IntakeConstants.State.STOP),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
+        mPivot.changeState(PivotConstants.State.CARRY)
+      )
     );
 
     //#endregion

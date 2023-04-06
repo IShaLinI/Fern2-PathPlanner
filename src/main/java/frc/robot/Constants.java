@@ -22,7 +22,7 @@ public class Constants {
     public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI); 
     
     public static double kTurboTurningSpeed = 0.8;
-    public static double kNormalTurningSpeed = 0.4;
+    public static double kNormalTurningSpeed = 0.2;
     public static double kTurboForwardSpeed = 1;
     public static double kNormalForwardSpeed = 0.8;
 

@@ -41,7 +41,7 @@ public class Intake extends SubsystemBase {
   @Override
   public void periodic() {
 
-    SmartDashboard.putNumber("IntakeSet", mCurrentState.speed);
+    SmartDashboard.putString("States/Intake", mCurrentState.toString());
 
     runIntake();
   }
