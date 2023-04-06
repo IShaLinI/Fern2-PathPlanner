@@ -29,25 +29,12 @@ public class RobotContainer {
 
   private CommandXboxController mDriver = new CommandXboxController(0);
   private CommandXboxController mOperator = new CommandXboxController(1);
-  private CommandXboxController mTam = new CommandXboxController(2);
 
   public RobotContainer() {
     configureBindings();
   }
 
   private void configureBindings() {
-
-
-    //Change based on driver
-    // mDrivetrain.setDefaultCommand(
-    //   new RunCommand(()-> mDrivetrain.drive(
-    //     Deadbander.applyLinearScaledDeadband(mTam.getLeftX(),0.1) * DriveConstants.kMaxSpeed,
-    //     Deadbander.applyLinearScaledDeadband(mTam.getRightY(), 0.1) * DriveConstants.kMaxTurnSpeed,
-    //     mTam.leftTrigger().getAsBoolean()
-    //   ),
-    //   mDrivetrain
-    // )
-    // );
 
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
@@ -73,57 +60,6 @@ public class RobotContainer {
       mDrivetrain.changeState(DriveConstants.FrontState.REVERSE)
     );
 
-    mTam.leftBumper().onTrue(
-      new InstantCommand(mDrivetrain::toggleState)
-    );
-
-    mTam.b().whileTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.SUBSTATION),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.GRAB)
-      )
-    );
-
-    mTam.b().onFalse(
-      new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
-    );
-
-    mTam.x().whileTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.L1),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.L1RELEASE)
-      )
-    );
-    
-    mTam.x().onFalse(
-      new ParallelCommandGroup(
-        mIntake.changeState(IntakeConstants.State.IDLE),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
-    );
-
-    mTam.y().whileTrue(
-      new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.L2),
-        new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.L2RELEASE)
-      )
-    );
-
-    mTam.y().onFalse(
-      new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.IDLE),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
-    );
-
-
     mOperator.povRight().onTrue(
       new InstantCommand(
         mPivot::zeroEncoder,
@@ -137,14 +73,12 @@ public class RobotContainer {
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.GRAB)
       )
+    ).whileFalse(
+        new SequentialCommandGroup(
+          mIntake.changeState(IntakeConstants.State.STOP),
+          mPivot.changeState(PivotConstants.State.CARRY))
     );
-
-    mOperator.x().onFalse(
-      new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
-        mPivot.changeState(PivotConstants.State.CARRY)
-      )
-    );
+  
 
     mOperator.rightBumper().whileTrue(
       new SequentialCommandGroup(
@@ -152,9 +86,7 @@ public class RobotContainer {
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.GRAB)
       )
-    );
-
-    mOperator.rightBumper().onFalse(
+    ).whileFalse(
       new SequentialCommandGroup(
         mIntake.changeState(IntakeConstants.State.STOP),
         mPivot.changeState(PivotConstants.State.CARRY)
@@ -167,9 +99,7 @@ public class RobotContainer {
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.L1RELEASE)
       )
-    );
-    
-    mOperator.y().onFalse(
+    ).whileFalse(
       new ParallelCommandGroup(
         mIntake.changeState(IntakeConstants.State.STOP),
         new WaitUntilCommand(() -> mPivot.atTarget()),
@@ -183,9 +113,7 @@ public class RobotContainer {
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.L2RELEASE)
       )
-    );
-
-    mOperator.b().onFalse(
+    ).whileFalse(
       new SequentialCommandGroup(
         mIntake.changeState(IntakeConstants.State.IDLE),
         mPivot.changeState(PivotConstants.State.CARRY)
@@ -198,28 +126,23 @@ public class RobotContainer {
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.L3RELEASE)
       )
-    );
-
-    mOperator.a().onFalse(
+    ).whileFalse(
       new SequentialCommandGroup(
         mIntake.changeState(IntakeConstants.State.IDLE),
         mPivot.changeState(PivotConstants.State.CARRY)
       )
     );
 
-    mOperator.rightTrigger().onTrue(
+    mOperator.rightTrigger().whileTrue(
       mIntake.changeState(IntakeConstants.State.GRAB)
-    );
-
-    mOperator.rightTrigger().onFalse(
+    ).whileFalse(
       mIntake.changeState(IntakeConstants.State.STOP)
     );
 
+   
     mOperator.leftTrigger().onTrue(
       mIntake.changeState(IntakeConstants.State.RELEASE)
-    );
-
-    mOperator.leftTrigger().onFalse(
+    ).whileFalse(
       mIntake.changeState(IntakeConstants.State.STOP)
     );
 
@@ -235,7 +158,7 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
 
-    return mDrivetrain.new ChargeStationAuto();
+    return mAutoCommands.getAuto();
 
   }
 }

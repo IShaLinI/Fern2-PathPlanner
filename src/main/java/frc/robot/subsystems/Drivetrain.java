@@ -262,7 +262,7 @@ public class Drivetrain extends SubsystemBase {
 
       SmartDashboard.putNumber("Setpoint", mSetpoint.getDegrees());
       SmartDashboard.putNumber("Current Angle", getAngle().getDegrees());
-      SmartDashboard.putNumber("Error", error);
+      SmartDashboard.putNumber("Error", mError);
 
       mError = error;
     }
@@ -274,7 +274,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
    public double getPitch(){
-    return mPigeon.getYaw();
+    return mPigeon.getPitch();
   }
 
   public class ChargeStationAuto extends CommandBase{
