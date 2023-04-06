@@ -5,7 +5,6 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.PIDConstants;
-
 import edu.wpi.first.math.util.Units;
 
 public class Constants {
@@ -15,17 +14,23 @@ public class Constants {
     public static double kTrackwidth = Units.inchesToMeters(19);
     public static double kDistancePerPulse = (1.0/2048d) * (Units.inchesToMeters(6) * Math.PI) * (1/10.71);
 
-    public static PIDConstants mTrajConstants = new PIDConstants(0, 0, 0);
-    public static double kTrajectoryMaxSpeed = 3;
-	  public static double kTrajectoryMaxAccel = 3;
+    public static PIDConstants mTrajConstants = new PIDConstants(0.5, 0, 0);
+    public static double kTrajectoryMaxSpeed = 1;
+	  public static double kTrajectoryMaxAccel = 1;
     
     public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60d);
     public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI); 
     
-    public static double kTurboForwardSpeed = 1;
-    public static double kNormalForwardSpeed = 0.6;
+    public static double kTurboForwardSpeed = 0.8;
+    public static double kNormalForwardSpeed = 0.4;
     public static double kTurboTurningSpeed = 1;
-    public static double kNormalTurningSpeed = 0.2;
+    public static double kNormalTurningSpeed = 0.8;
+
+    // public static double kTurboForwardSpeed = 0.2;
+    // public static double kNormalForwardSpeed = 0.2;
+
+    // public static double kTurboTurningSpeed = 0.8;
+    // public static double kNormalTurningSpeed = 0.6;
 
     public static enum FrontState {
      
@@ -62,8 +67,8 @@ public class Constants {
 
     public static class IntakeConstants {
     
-        public static final double kInSpeed = 0.40;
-        public static final double kOutSpeed = 0.60;
+        public static final double kInSpeed = 0.25;
+        public static final double kOutSpeed = 0.40;
     
         public static final double kS = 1;
     
@@ -71,8 +76,9 @@ public class Constants {
           
           GRAB(-kInSpeed),
           RELEASE(kOutSpeed),
-          L1RELEASE(0.30),
-          L2RELEASE(0.60),
+          L1RELEASE(0.1),
+          L2RELEASE(0.15),
+          L3RELEASE(0.25),
           IDLE(-kS/12),
           STOP(0),
           STARTING(0);
@@ -93,12 +99,13 @@ public class Constants {
       public static class PivotConstants {
 
         public static double kGearing = ((1.0 / 20) * (16.0 / 60));
-        public static double kThroughboreOffset = 0.496;
+        public static double kThroughboreOffset = 0.5149;
 
         public static enum State {
           SUBSTATION(5),
           L1(45),
           L2(-20),
+          L3(-30),
           STOP(0),
           STARTING(-90),
           FLOOR(110),

@@ -10,9 +10,11 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
@@ -21,6 +23,7 @@ import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
@@ -28,9 +31,13 @@ import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.DriveConstants.FrontState;
 import frc.robot.Constants.RobotConstants.CAN;
 
 public class Drivetrain extends SubsystemBase {
@@ -57,6 +64,8 @@ public class Drivetrain extends SubsystemBase {
 
   private Field2d mField = new Field2d();
 
+  private FrontState mCurrentState;
+
   public static final LinearSystem<N2,N2,N2> mDrivetrainPlant = LinearSystemId.identifyDrivetrainSystem(
     2.2195, //Linear kV
     0.32787, //Linear kA
@@ -81,6 +90,8 @@ public class Drivetrain extends SubsystemBase {
 
     SmartDashboard.putData("Field", mField);
 
+    mCurrentState = FrontState.FORWARD;
+
   }
 
 
@@ -94,13 +105,10 @@ public class Drivetrain extends SubsystemBase {
     mFrontRight.setInverted(true);
     mBackRight.setInverted(true);
 
-    mBackLeft.follow(mFrontLeft);
-    mBackRight.follow(mFrontRight);
-
-    mFrontLeft.setNeutralMode(NeutralMode.Brake);
-    mFrontRight.setNeutralMode(NeutralMode.Brake);
-    mBackLeft.setNeutralMode(NeutralMode.Brake);
-    mBackRight.setNeutralMode(NeutralMode.Brake);
+    mFrontLeft.setNeutralMode(NeutralMode.Coast);
+    mFrontRight.setNeutralMode(NeutralMode.Coast);
+    mBackLeft.setNeutralMode(NeutralMode.Coast);
+    mBackRight.setNeutralMode(NeutralMode.Coast);
 
         // Makes Green go Forward. Sim is weird so thats what the if statement is for
         if (RobotBase.isReal()) {
@@ -118,10 +126,10 @@ public class Drivetrain extends SubsystemBase {
         mFrontLeft.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
         mFrontRight.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
    
-        mFrontLeft.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 40, 40, 0));
-        mFrontRight.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 40, 40, 0));
-        mBackLeft.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 40, 40, 0));
-        mBackRight.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 40, 40, 0));
+        mFrontLeft.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 30, 30, 0));
+        mFrontRight.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 30, 30, 0));
+        mBackLeft.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 30, 30, 0));
+        mBackRight.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 30, 30, 0));
    
         mFrontLeft.configVelocityMeasurementPeriod(SensorVelocityMeasPeriod.Period_1Ms);
         mFrontLeft.configVelocityMeasurementWindow(1);
@@ -193,6 +201,8 @@ public class Drivetrain extends SubsystemBase {
   public void setVoltages(double leftVolts, double rightVolts){
     mFrontLeft.setVoltage(leftVolts);
     mFrontRight.setVoltage(rightVolts);
+    mBackLeft.setVoltage(leftVolts);
+    mBackRight.setVoltage(rightVolts);
   }
 
   public void drive(double xSpeed, double rot, boolean turbo) {
@@ -209,11 +219,113 @@ public class Drivetrain extends SubsystemBase {
       new ChassisSpeeds(
         xSpeed,
         0,
-        rot
+        rot * mCurrentState.direction
       );
 
     setSpeeds(mKinematics.toWheelSpeeds(wheelSpeeds));
 
+  }
+
+  public Rotation2d getAngle(){
+    return mPigeon.getRotation2d().times(-1);
+  }
+
+  public void setGyro(double angle) {
+    mPigeon.setAccumZAngle(angle);
+  }
+
+  public class RotateRelative extends CommandBase {
+
+    private Rotation2d mAngle;
+    private Rotation2d mSetpoint;
+    private double kS = 0.05;
+    private double mError;
+
+    public RotateRelative(Rotation2d angle) {
+      mAngle = angle;
+    }
+
+    @Override
+    public void initialize() {
+      mSetpoint = getAngle().rotateBy(mAngle);
+    }
+
+    @Override
+    public void execute() {
+      double error = (mSetpoint.getDegrees() - getAngle().getDegrees());
+      double output = MathUtil.clamp((error/270 + kS), -0.25, 0.25); 
+      
+      mFrontLeft.set(output);
+      mFrontRight.set(output);
+      mBackLeft.set(output);
+      mBackRight.set(output);
+
+      SmartDashboard.putNumber("Setpoint", mSetpoint.getDegrees());
+      SmartDashboard.putNumber("Current Angle", getAngle().getDegrees());
+      SmartDashboard.putNumber("Error", error);
+
+      mError = error;
+    }
+
+    @Override
+    public boolean isFinished() {
+        return false;
+    }
+  }
+
+   public double getPitch(){
+    return mPigeon.getYaw();
+  }
+
+  public class ChargeStationAuto extends CommandBase{
+
+    private double mPower = 0.4;
+
+    @Override
+    public void initialize() {
+    }
+
+    @Override
+    public void execute() {
+
+      if(getPitch() > 0){
+        mFrontLeft.set(mPower);
+        mFrontRight.set(mPower);
+        mBackLeft.set(mPower);
+        mBackRight.set(mPower);
+      }
+      else{
+        mFrontLeft.set(-mPower);
+        mFrontRight.set(-mPower);
+        mBackLeft.set(-mPower);
+        mBackRight.set(-mPower);
+      }
+
+      mFrontLeft.set(mPower);
+      mFrontRight.set(mPower);
+      
+    }
+
+    @Override
+    public boolean isFinished() {
+
+      return false;
+
+    }
+
+  }
+
+  public Command changeState(FrontState frontState) {
+    return new InstantCommand(
+      ()-> mCurrentState = frontState);
+  }
+
+  public void toggleState() {
+    if(mCurrentState == FrontState.FORWARD){
+      mCurrentState = FrontState.REVERSE;
+    }else{
+      mCurrentState = FrontState.FORWARD;
+    }
   }
 
   public Pose2d getRobotPosition(){
@@ -239,6 +351,13 @@ public class Drivetrain extends SubsystemBase {
       KitbotWheelSize.kSixInch.value,
       null
     );
+  }
+
+  public void resetEncoders() {
+    mFrontRight.setSelectedSensorPosition(0, 0, 0);
+    mFrontLeft.setSelectedSensorPosition(0, 0, 0);
+    mBackRight.setSelectedSensorPosition(0, 0, 0);
+    mBackLeft.setSelectedSensorPosition(0, 0, 0);
   }
 
   public void resetPoseAndGyro(Pose2d pose){
@@ -268,6 +387,12 @@ public class Drivetrain extends SubsystemBase {
   }
   @Override
   public void periodic() {
+
+    SmartDashboard.putNumber("drive state", mCurrentState.direction);
+    SmartDashboard.putNumber("encoder distance inches", Units.metersToInches(getWheelDistances()[0]));
+    SmartDashboard.putNumber("gyro angle", mPigeon.getAngle());
+    SmartDashboard.putNumber("yaw", mPigeon.getYaw());
+    SmartDashboard.putNumber("pitch", mPigeon.getPitch());
 
     updateOdometry();
   }

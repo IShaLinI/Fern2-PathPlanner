@@ -8,10 +8,13 @@ import java.util.HashMap;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.auto.RamseteAutoBuilder;
 import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.DriveConstants;
@@ -68,7 +71,17 @@ public class AutoCommands {
 
         autoChooser = new SendableChooser<>();
         autoChooser.addOption("Nothing", new PrintCommand("No auto selected"));
-        autoChooser.addOption("New Path", makeAuto("New Path"));
+        autoChooser.addOption("forward", makeAuto("straight"));
+        autoChooser.addOption("charge", new SequentialCommandGroup(
+            new RunCommand(() -> drivetrain.setVoltages(-0.3,0.3), drivetrain).withTimeout(3),
+            drivetrain.new ChargeStationAuto()
+        ));
+        autoChooser.addOption("BlueL2Sub", new SequentialCommandGroup(
+            new InstantCommand(
+                () -> drivetrain.setGyro(-90)
+            ),
+            drivetrain.new RotateRelative(new Rotation2d(90)),
+            makeAuto("BlueL2Sub")));
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 

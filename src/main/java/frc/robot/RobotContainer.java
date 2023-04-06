@@ -29,6 +29,7 @@ public class RobotContainer {
 
   private CommandXboxController mDriver = new CommandXboxController(0);
   private CommandXboxController mOperator = new CommandXboxController(1);
+  private CommandXboxController mTam = new CommandXboxController(2);
 
   public RobotContainer() {
     configureBindings();
@@ -36,32 +37,70 @@ public class RobotContainer {
 
   private void configureBindings() {
 
+
+    //Change based on driver
+    // mDrivetrain.setDefaultCommand(
+    //   new RunCommand(()-> mDrivetrain.drive(
+    //     Deadbander.applyLinearScaledDeadband(mTam.getLeftX(),0.1) * DriveConstants.kMaxSpeed,
+    //     Deadbander.applyLinearScaledDeadband(mTam.getRightY(), 0.1) * DriveConstants.kMaxTurnSpeed,
+    //     mTam.leftTrigger().getAsBoolean()
+    //   ),
+    //   mDrivetrain
+    // )
+    // );
+
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
-        -Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(),0.1) * DriveConstants.kMaxSpeed,
-        -Deadbander.applyLinearScaledDeadband(mDriver.getRawAxis(2), 0.1) * DriveConstants.kMaxTurnSpeed,
-        mDriver.leftBumper().getAsBoolean()
+        Deadbander.applyLinearScaledDeadband(mDriver.getRightX(),0.1) * DriveConstants.kMaxSpeed,
+        Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1) * DriveConstants.kMaxTurnSpeed,
+        mDriver.leftTrigger().getAsBoolean()
       ),
       mDrivetrain
     )
     );
 
-    mOperator.povRight().onTrue(
+
+    mDriver.povLeft().onTrue(
       new InstantCommand(
-        mPivot::zeroEncoder,
-        mPivot
-      )
+        mDrivetrain::resetEncoders)
+    );
+    
+    mDriver.povUp().onTrue(
+      mDrivetrain.changeState(DriveConstants.FrontState.FORWARD)
     );
 
-    mOperator.y().whileTrue(
+    mDriver.povDown().onTrue(
+      mDrivetrain.changeState(DriveConstants.FrontState.REVERSE)
+    );
+
+    mTam.leftBumper().onTrue(
+      new InstantCommand(mDrivetrain::toggleState)
+    );
+
+    mTam.b().whileTrue(
       new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.FLOOR),
+        mPivot.changeState(PivotConstants.State.SUBSTATION),
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.GRAB)
       )
     );
+
+    mTam.b().onFalse(
+      new SequentialCommandGroup(
+        mIntake.changeState(IntakeConstants.State.STOP),
+        mPivot.changeState(PivotConstants.State.CARRY)
+      )
+    );
+
+    mTam.x().whileTrue(
+      new SequentialCommandGroup(
+        mPivot.changeState(PivotConstants.State.L1),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
+        mIntake.changeState(IntakeConstants.State.L1RELEASE)
+      )
+    );
     
-    mOperator.y().onFalse(
+    mTam.x().onFalse(
       new ParallelCommandGroup(
         mIntake.changeState(IntakeConstants.State.IDLE),
         new WaitUntilCommand(() -> mPivot.atTarget()),
@@ -69,21 +108,29 @@ public class RobotContainer {
       )
     );
 
-    mOperator.b().whileTrue(
+    mTam.y().whileTrue(
       new SequentialCommandGroup(
-        mPivot.changeState(PivotConstants.State.L1),
+        mPivot.changeState(PivotConstants.State.L2),
         new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.L1RELEASE)
+        mIntake.changeState(IntakeConstants.State.L2RELEASE)
       )
     );
 
-    mOperator.b().onFalse(
+    mTam.y().onFalse(
       new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
+        mIntake.changeState(IntakeConstants.State.IDLE),
         mPivot.changeState(PivotConstants.State.CARRY)
       )
     );
 
+
+    mOperator.povRight().onTrue(
+      new InstantCommand(
+        mPivot::zeroEncoder,
+        mPivot
+      )
+    );
+    
     mOperator.x().whileTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.SUBSTATION),
@@ -99,17 +146,63 @@ public class RobotContainer {
       )
     );
 
-    mOperator.a().whileTrue(
+    mOperator.rightBumper().whileTrue(
+      new SequentialCommandGroup(
+        mPivot.changeState(PivotConstants.State.FLOOR),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
+        mIntake.changeState(IntakeConstants.State.GRAB)
+      )
+    );
+
+    mOperator.rightBumper().onFalse(
+      new SequentialCommandGroup(
+        mIntake.changeState(IntakeConstants.State.STOP),
+        mPivot.changeState(PivotConstants.State.CARRY)
+      )
+    );
+    
+    mOperator.y().whileTrue(
+      new SequentialCommandGroup(
+        mPivot.changeState(PivotConstants.State.L1),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
+        mIntake.changeState(IntakeConstants.State.L1RELEASE)
+      )
+    );
+    
+    mOperator.y().onFalse(
+      new ParallelCommandGroup(
+        mIntake.changeState(IntakeConstants.State.STOP),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
+        mPivot.changeState(PivotConstants.State.CARRY)
+      )
+    );
+
+    mOperator.b().whileTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.L2),
         new WaitUntilCommand(() -> mPivot.atTarget()),
-        mIntake.changeState(IntakeConstants.State.RELEASE)
+        mIntake.changeState(IntakeConstants.State.L2RELEASE)
+      )
+    );
+
+    mOperator.b().onFalse(
+      new SequentialCommandGroup(
+        mIntake.changeState(IntakeConstants.State.IDLE),
+        mPivot.changeState(PivotConstants.State.CARRY)
+      )
+    );
+
+    mOperator.a().whileTrue(
+      new SequentialCommandGroup(
+        mPivot.changeState(PivotConstants.State.L3),
+        new WaitUntilCommand(() -> mPivot.atTarget()),
+        mIntake.changeState(IntakeConstants.State.L3RELEASE)
       )
     );
 
     mOperator.a().onFalse(
       new SequentialCommandGroup(
-        mIntake.changeState(IntakeConstants.State.STOP),
+        mIntake.changeState(IntakeConstants.State.IDLE),
         mPivot.changeState(PivotConstants.State.CARRY)
       )
     );
@@ -142,7 +235,7 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
 
-    return mAutoCommands.getAuto();
+    return mDrivetrain.new ChargeStationAuto();
 
   }
 }
