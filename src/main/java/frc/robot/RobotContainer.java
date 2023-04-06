@@ -35,18 +35,15 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-
+    //#region Driver Controls
     mDrivetrain.setDefaultCommand(
       new RunCommand(()-> mDrivetrain.drive(
         Deadbander.applyLinearScaledDeadband(mDriver.getRightX(),0.1) * DriveConstants.kMaxSpeed,
-        Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1) * DriveConstants.kMaxTurnSpeed,
-        mDriver.leftTrigger().getAsBoolean(),
-        mDriver.rightTrigger().getAsBoolean()
+        Deadbander.applyLinearScaledDeadband(mDriver.getLeftY(), 0.1) * DriveConstants.kMaxTurnSpeed
       ),
       mDrivetrain
     )
     );
-
 
     mDriver.povLeft().onTrue(
       new InstantCommand(
@@ -61,6 +58,17 @@ public class RobotContainer {
       mDrivetrain.changeState(DriveConstants.FrontState.REVERSE)
     );
 
+    mDriver.leftTrigger().onTrue(
+      mDrivetrain.changeSpeedMod(Constants.ModState.TURBO)
+    );
+
+    mDriver.rightTrigger().onTrue(
+      mDrivetrain.changeSpeedMod(Constants.ModState.SLOW)
+    );
+
+    //#endregion
+    //#region Operator Controls
+
     mOperator.povRight().onTrue(
       new InstantCommand(
         mPivot::zeroEncoder,
@@ -68,39 +76,39 @@ public class RobotContainer {
       )
     );
     
-    mOperator.x().whileTrue(
+    mOperator.x().onTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.SUBSTATION),
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.GRAB)
       )
-    ).whileFalse(
-        new SequentialCommandGroup(
-          mIntake.changeState(IntakeConstants.State.STOP),
-          mPivot.changeState(PivotConstants.State.CARRY))
+    ).onFalse(
+      new SequentialCommandGroup(
+        mIntake.changeState(IntakeConstants.State.STOP),
+        mPivot.changeState(PivotConstants.State.CARRY)
+      )
     );
   
-
-    mOperator.rightBumper().whileTrue(
+    mOperator.rightBumper().onTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.FLOOR),
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.GRAB)
       )
-    ).whileFalse(
+    ).onFalse(
       new SequentialCommandGroup(
         mIntake.changeState(IntakeConstants.State.STOP),
         mPivot.changeState(PivotConstants.State.CARRY)
       )
     );
     
-    mOperator.y().whileTrue(
+    mOperator.y().onTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.L1),
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.L1RELEASE)
       )
-    ).whileFalse(
+    ).onFalse(
       new ParallelCommandGroup(
         mIntake.changeState(IntakeConstants.State.STOP),
         new WaitUntilCommand(() -> mPivot.atTarget()),
@@ -108,13 +116,13 @@ public class RobotContainer {
       )
     );
 
-    mOperator.b().whileTrue(
+    mOperator.b().onTrue(
       new SequentialCommandGroup(
         mPivot.changeState(PivotConstants.State.L2),
         new WaitUntilCommand(() -> mPivot.atTarget()),
         mIntake.changeState(IntakeConstants.State.L2RELEASE)
       )
-    ).whileFalse(
+    ).onFalse(
       new SequentialCommandGroup(
         mIntake.changeState(IntakeConstants.State.IDLE),
         mPivot.changeState(PivotConstants.State.CARRY)
@@ -134,32 +142,10 @@ public class RobotContainer {
       )
     );
 
-    mOperator.rightTrigger().whileTrue(
-      mIntake.changeState(IntakeConstants.State.GRAB)
-    ).whileFalse(
-      mIntake.changeState(IntakeConstants.State.STOP)
-    );
-
-   
-    mOperator.leftTrigger().onTrue(
-      mIntake.changeState(IntakeConstants.State.RELEASE)
-    ).whileFalse(
-      mIntake.changeState(IntakeConstants.State.STOP)
-    );
-
-    mOperator.povUp().onTrue(
-      mPivot.changeState(PivotConstants.State.L2)
-    );
-
-    mOperator.povDown().onTrue(
-      mPivot.changeState(PivotConstants.State.L1)
-    );
-
+    //#endregion
   }
 
   public Command getAutonomousCommand() {
-
     return mAutoCommands.getAuto();
-
   }
 }

@@ -207,19 +207,11 @@ public class Drivetrain extends SubsystemBase {
     mBackRight.setVoltage(rightVolts);
   }
 
-  public void drive(double xSpeed, double rot, boolean turbo, boolean slow) {
-   
-    if(turbo){
-      changeSpeedMod(ModState.TURBO);
-    }else if(slow){
-      changeSpeedMod(ModState.SLOW);
-    }else{
-      changeSpeedMod(ModState.NORMAL);
-    }
+  public void drive(double xSpeed, double rot) {
 
     var wheelSpeeds = 
       new ChassisSpeeds(
-        xSpeed * mCurrentMod.xMod,
+        xSpeed * mCurrentMod.xMod * mCurrentState.direction,
         0,
         rot * mCurrentMod.rotMod * mCurrentState.direction
       );
@@ -325,14 +317,6 @@ public class Drivetrain extends SubsystemBase {
   public Command changeSpeedMod(ModState modState) {
     return new InstantCommand(
       ()-> mCurrentMod = modState);
-  }
-
-  public void toggleState() {
-    if(mCurrentState == FrontState.FORWARD){
-      mCurrentState = FrontState.REVERSE;
-    }else{
-      mCurrentState = FrontState.FORWARD;
-    }
   }
 
   public Pose2d getRobotPosition(){

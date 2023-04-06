@@ -3,13 +3,25 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
+import com.ctre.phoenix.motorcontrol.TalonFXSimCollection;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -27,9 +39,29 @@ public class Pivot extends SubsystemBase {
 
     private State mCurrentState = State.STARTING;
     public double falconOffset;
-    public double trimVal = 0;
 
-    public boolean firstRun = true; 
+    private final SingleJointedArmSim mArmSim = new SingleJointedArmSim(
+        LinearSystemId.createSingleJointedArmSystem(
+            DCMotor.getFalcon500(2), SingleJointedArmSim.estimateMOI(0.57, Units.lbsToKilograms(7.169)), (20d * 60d/16d)
+        ),
+        DCMotor.getFalcon500(2),
+        (20 * 60d/16d),
+        0.57,
+        Units.degreesToRadians(-90),
+        Units.degreesToRadians(140),
+        true
+    );
+
+    private final TalonFXSimCollection mArmMotorSim;
+
+    private final Mechanism2d mMech2d = new Mechanism2d(60, 60);
+    private final MechanismRoot2d mArmPivot = mMech2d.getRoot("Pivot", 30, 30);
+    private final MechanismLigament2d mArmTower = mArmPivot.append(new MechanismLigament2d("ArmTower", 30, -90));
+    private final MechanismLigament2d mArm = mArmPivot.append(
+        new MechanismLigament2d("Arm", 20, Units.degreesToRadians(mArmSim.getAngleRads()),
+        6,
+        new Color8Bit(Color.kYellow)
+    ));
 
     public Pivot() {
 
@@ -43,8 +75,14 @@ public class Pivot extends SubsystemBase {
         
         mMaster.setSelectedSensorPosition(0);
 
-        mEncoder.setPositionOffset(PivotConstants.kThroughboreOffset);
-        falconOffset = degreeToFalcon(getThroughBoreAngle());
+        if(RobotBase.isReal()){
+            mEncoder.setPositionOffset(PivotConstants.kThroughboreOffset);
+            falconOffset = degreeToFalcon(getThroughBoreAngle());
+        }
+        mArmMotorSim = mMaster.getSimCollection();
+
+
+        SmartDashboard.putData("Arm Sim", mMech2d);
 
         configureMotor();
         
@@ -73,7 +111,13 @@ public class Pivot extends SubsystemBase {
 
     public void runPivot() {
 
-        mMaster.set(MathUtil.clamp(mPID.calculate(getAngle(), mCurrentState.angle)/12, -0.8, 0.8));
+        double output = MathUtil.clamp(mPID.calculate(getAngle(), mCurrentState.angle)/12, -0.8, 0.8);
+
+        double kS = 0.009;
+
+        output += (getAngle() < 0) ? kS : -kS; 
+        
+        mMaster.set(output);
         
     }
 
@@ -81,7 +125,7 @@ public class Pivot extends SubsystemBase {
 
         double tolerance = 5; 
 
-        return (Math.abs(getAngle() - mCurrentState.angle + trimVal) < tolerance);
+        return (Math.abs(getAngle() - mCurrentState.angle) < tolerance);
 
     }
   
@@ -135,6 +179,16 @@ public class Pivot extends SubsystemBase {
         SmartDashboard.putNumber("front raw encoder", mMaster.getSelectedSensorPosition());
         SmartDashboard.putNumber("back raw encoder", mSlave.getSelectedSensorPosition());
 
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        mArmSim.setInput(mMaster.get() * RobotController.getBatteryVoltage());
+        mArmSim.update(0.02);
+        double poseDelta = (Units.radiansPerSecondToRotationsPerMinute(mArmSim.getVelocityRadPerSec()) / 600) * 60d/16d * 20 * 2048;
+        mArmMotorSim.addIntegratedSensorPosition((int)poseDelta);
+        mArm.setAngle(getAngle() + 90);
 
     }
+
 }
