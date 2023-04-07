@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -79,6 +81,8 @@ public class Constants {
           public static int kBackPivot = 8;
 
         }
+
+        public static BooleanSupplier isBlue = () -> DriverStation.getAlliance() == Alliance.Blue;
 
         public enum StartingPose {
      

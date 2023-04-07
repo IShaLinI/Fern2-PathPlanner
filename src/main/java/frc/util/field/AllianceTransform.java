@@ -1,8 +1,12 @@
 package frc.util.field;
 
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class AllianceTransform {
  
@@ -21,6 +25,10 @@ public class AllianceTransform {
             Rotation2d.fromDegrees(outRComp)
         );
 
+    }
+
+    public static DoubleSupplier allianceBasedDouble(double blueVal, double redVal){
+        return () -> DriverStation.getAlliance() == Alliance.Blue ? blueVal : redVal;
     }
 
 }

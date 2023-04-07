@@ -5,15 +5,12 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
-import frc.robot.Constants.PivotConstants;
+import frc.robot.commands.AutoCommands;
+import frc.robot.commands.CommandFactory;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Pivot;
@@ -25,7 +22,8 @@ public class RobotContainer {
   private final Intake mIntake = new Intake();
   private final Pivot mPivot = new Pivot();
 
-  private AutoCommands mAutoCommands = new AutoCommands(mDrivetrain, mIntake, mPivot);
+  private CommandFactory mCommandFactory = new CommandFactory(mDrivetrain, mIntake, mPivot);
+  private AutoCommands mAutoCommands = new AutoCommands(mDrivetrain, mCommandFactory);
 
   private CommandXboxController mDriver = new CommandXboxController(0);
   private CommandXboxController mOperator = new CommandXboxController(1);
@@ -67,19 +65,19 @@ public class RobotContainer {
     );
 
     mDriver.rightBumper().onTrue(
-      mAutoCommands.getEvent("FireL1")
+      mCommandFactory.getSubPickup()
     ).onFalse(
-      mAutoCommands.getEvent("Carry")
+      mCommandFactory.getCarry()
     );
 
     mDriver.leftBumper().onTrue(
-      mAutoCommands.getEvent("FireL1")
+      mCommandFactory.getFireL1()
     ).onFalse(
-      mAutoCommands.getEvent("Carry")
+      mCommandFactory.getCarry()
     );
 
     mDriver.a().onTrue(
-      mDrivetrain.RotateTo(0)
+      mDrivetrain.new RotateAbsolute(90)
     );
 
 
@@ -87,33 +85,33 @@ public class RobotContainer {
     //#region Operator Controls
     
     mOperator.x().onTrue(
-      mAutoCommands.getEvent("SubPickup")
+      mCommandFactory.getSubPickup()
     ).onFalse(
-      mAutoCommands.getEvent("Carry")
+      mCommandFactory.getCarry()
     );
   
-    mOperator.rightBumper().onTrue(
-      mAutoCommands.getEvent("FloorPickup")
+    mOperator.x().onTrue(
+      mCommandFactory.getFloorPickup()
     ).onFalse(
-      mAutoCommands.getEvent("Carry")
+      mCommandFactory.getCarry()
     );
     
-    mOperator.y().onTrue(
-      mAutoCommands.getEvent("FireL1")
+    mOperator.x().onTrue(
+      mCommandFactory.getFireL1()
     ).onFalse(
-      mAutoCommands.getEvent("Carry")
+      mCommandFactory.getCarry()
     );
 
-    mOperator.b().onTrue(
-      mAutoCommands.getEvent("FireL2")
+    mOperator.x().onTrue(
+      mCommandFactory.getFireL2()
     ).onFalse(
-      mAutoCommands.getEvent("Carry")
+      mCommandFactory.getCarry()
     );
 
-    mOperator.a().onTrue(
-      mAutoCommands.getEvent("FireL3")
+    mOperator.x().onTrue(
+      mCommandFactory.getFireL3()
     ).onFalse(
-      mAutoCommands.getEvent("Carry")
+      mCommandFactory.getCarry()
     );
 
     //#endregion
@@ -122,4 +120,11 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return mAutoCommands.getAuto();
   }
+
+  public void stopAll(){
+    mDrivetrain.stop();
+    mIntake.changeState(IntakeConstants.State.STOP);
+    mPivot.stop();
+  }
+
 }

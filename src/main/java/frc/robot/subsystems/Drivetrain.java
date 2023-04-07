@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
@@ -23,8 +25,10 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
@@ -34,9 +38,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.PrintCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.RobotConstants;
 import frc.robot.Constants.DriveConstants.SpeedState;
 import frc.robot.Constants.DriveConstants.DirState;
 import frc.robot.Constants.RobotConstants.CAN;
@@ -218,34 +223,37 @@ public class Drivetrain extends SubsystemBase {
 
   public class RotateRelative extends CommandBase {
 
-    private Rotation2d mAngle;
+    private DoubleSupplier mInput;
+    private double mSetpoint;
 
     private double kS = (RobotBase.isReal()) ? 0.05 : 0;
-    private double kP = 1d/30;
 
-    private PIDController mPID = new PIDController(kP, 0, 0);
-
-
-    public RotateRelative(Rotation2d angle) {
-      mAngle = angle;
-    }
+    private PIDController mPID = new PIDController(1d/15, 0, 1d/300);
 
     public RotateRelative(double angle) {
+      mInput = () -> angle;
+    }
 
-      SmartDashboard.putNumber("RotateRelative/Input", angle);
-
-      mAngle = Rotation2d.fromDegrees(angle);
+    public RotateRelative(DoubleSupplier angleSupplier) {
+      mInput = angleSupplier;
     }
 
     @Override
     public void initialize() {
-      mAngle = mAngle.plus(getAngle());
+      
+      double inputDeg = mInput.getAsDouble();
+      double normalizedCurrent = AngleUtil.normalizeAngle(getAngle().getDegrees());
+
+      double error = inputDeg - normalizedCurrent;
+
+      mSetpoint = getAngle().getDegrees() + error;
+
     }
 
     @Override
     public void execute() {
 
-      double output = mPID.calculate(getAngle().getDegrees(), mAngle.getDegrees());
+      double output = mPID.calculate(getAngle().getDegrees(), mSetpoint);
       output += (output > 0) ? kS : -kS;
 
       setVoltages(-output, output);
@@ -262,39 +270,91 @@ public class Drivetrain extends SubsystemBase {
     @Override
     public boolean isFinished() {
 
-      double positionTollerance = RobotBase.isReal() ? 1 : 0.1; //Degrees
-      
-      return Math.abs(mPID.getSetpoint() - getAngle().getDegrees()) < positionTollerance;
+      return mPID.atSetpoint();
 
     }
   }
 
-  public Command RotateTo(double angle){
+  public class RotateAbsolute extends CommandBase {
 
-    double normalizedRobotAngle = AngleUtil.normalizeAngle(getAngle().getDegrees());
+    private DoubleSupplier mInput;
+    private double mSetpoint;
 
-    return new PrintCommand(String.valueOf(getAngle().getDegrees()));
+    private double kS = (RobotBase.isReal()) ? 0.05 : 0;
 
-  }
+    private PIDController mPID = new PIDController(1d/15, 0, 1d/300);
 
-  public class DriveMeters extends CommandBase {
 
-    private double mDistance;
-    private double initial;
+    public RotateAbsolute(Rotation2d angle) {
+      mInput = () -> angle.getDegrees();
+    }
 
-    private double kS = (RobotBase.isReal()) ? 0.1 : 0;
-    private double kP = 1;
+    public RotateAbsolute(double angle) {
+      mInput = () -> angle;
+    }
 
-    private PIDController mPID = new PIDController(kP, 0, 0);
-
-    public DriveMeters(double distance) {
-      mDistance = distance;
-      initial = getWheelDistances()[0];
+    public RotateAbsolute(DoubleSupplier angleSupplier) {
+      mInput = angleSupplier;
     }
 
     @Override
     public void initialize() {
-      mPID.setSetpoint(initial + mDistance);
+      
+      double normalizedCurrent = AngleUtil.normalizeAngle(getAngle().getDegrees());
+      double inputDeg = mInput.getAsDouble();
+
+      double error = inputDeg - normalizedCurrent;
+
+      mSetpoint = getAngle().getDegrees() + error;
+
+    }
+
+    @Override
+    public void execute() {
+
+      double output = mPID.calculate(getAngle().getDegrees(), mSetpoint);
+      output += (output > 0) ? kS : -kS;
+
+      setVoltages(-output, output);
+
+      SmartDashboard.putNumber("RotateAbsolute/Setpoint", mPID.getSetpoint());
+      SmartDashboard.putBoolean("RotateAbsolute/At Setpoint", mPID.atSetpoint());
+      SmartDashboard.putNumber("RotateAbsolute/Current Angle", getAngle().getDegrees());
+      SmartDashboard.putNumber("RotateAbsolute/Position Error", mPID.getPositionError());
+      SmartDashboard.putNumber("RotateAbsolute/Velocity Error", mPID.getVelocityError());
+      SmartDashboard.putNumber("RotateAbsolute/Output", output);
+
+    }
+
+    @Override
+    public boolean isFinished() {
+
+      return mPID.atSetpoint();
+
+    }
+  }
+
+  public class DriveMeters extends CommandBase {
+
+    private DoubleSupplier mDistanceSupplier;
+    private double initial;
+
+    private double kS = (RobotBase.isReal()) ? 0.1 : 0;
+    private double kP = 2;
+
+    private PIDController mPID = new PIDController(kP, 0, 0);
+
+    public DriveMeters(double distance) {
+      mDistanceSupplier = () -> distance;
+    }
+
+    public DriveMeters(DoubleSupplier distanceSupplier) {
+      mDistanceSupplier = distanceSupplier;
+    }
+
+    @Override
+    public void initialize() {
+      mPID.setSetpoint(getWheelDistances()[0] + mDistanceSupplier.getAsDouble());
     }
 
     @Override
@@ -304,10 +364,10 @@ public class Drivetrain extends SubsystemBase {
 
       output += (output > 0) ? kS : -kS;
 
-      output = MathUtil.clamp(output, -2, 2);
-
       setSpeeds(new DifferentialDriveWheelSpeeds(output, output));
 
+      SmartDashboard.putNumber("DriveMeters/Initial", initial);
+      SmartDashboard.putNumber("DriveMeters/Input", mDistanceSupplier.getAsDouble());
       SmartDashboard.putNumber("DriveMeters/Setpoint", mPID.getSetpoint());
       SmartDashboard.putBoolean("DriveMeters/At Setpoint", mPID.atSetpoint());
       SmartDashboard.putNumber("DriveMeters/Current Distance", getWheelDistances()[0]);
@@ -319,14 +379,7 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public boolean isFinished() {
-
-      double positionTollerance = RobotBase.isReal() ? 0.1 : 0; //Meters
-      double velocityTollerance = RobotBase.isReal() ? 0.05 : 0; //Meters/s
-
-      boolean atPose = Math.abs(mPID.getPositionError()) <= positionTollerance;
-      boolean atVel = Math.abs(getWheelVelocities().leftMetersPerSecond) <= velocityTollerance;
-
-      return (atPose && atVel);
+      return mPID.atSetpoint();
     }
   }
 
@@ -402,11 +455,16 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putNumber("Drivetrain/Right Distance Meters", getWheelDistances()[1]);
     SmartDashboard.putNumber("Drivetrain/Robot Angle", getAngle().getDegrees());
     SmartDashboard.putNumber("Drivetrain/Robot Pitch", getPitch());
+    SmartDashboard.putNumber("Drivetrain/NormalizedAngle", AngleUtil.normalizeAngle(getAngle().getDegrees()));
     
     SmartDashboard.putString("States/DriveDirection", mCurrentDirState.toString());
     SmartDashboard.putString("States/DriveSpeed", mCurrentSpeedState.toString());
 
     updateOdometry();
+  }
+
+  public void stop() {
+    setVoltages(0, 0);
   }
 
 }

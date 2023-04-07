@@ -156,4 +156,10 @@ public class Pivot extends SubsystemBase {
         mPivotSim.update();
     }
 
+    public void stop(){
+        mMaster.setNeutralMode(NeutralMode.Coast);
+        mSlave.setNeutralMode(NeutralMode.Coast);
+        mCurrentState = State.CARRY;
+    }
+
 }
