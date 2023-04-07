@@ -11,6 +11,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -25,10 +26,9 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
+
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
@@ -38,13 +38,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.RobotConstants;
 import frc.robot.Constants.DriveConstants.SpeedState;
 import frc.robot.Constants.DriveConstants.DirState;
 import frc.robot.Constants.RobotConstants.CAN;
+
 import frc.util.controls.AngleUtil;
 
 public class Drivetrain extends SubsystemBase {
@@ -62,7 +62,6 @@ public class Drivetrain extends SubsystemBase {
   private final BasePigeonSimCollection mPigeonSim = mPigeon.getSimCollection();
 
   private final DifferentialDriveKinematics mKinematics = new DifferentialDriveKinematics(DriveConstants.kTrackwidth);
-
   private final DifferentialDriveOdometry mOdometry;
 
   private final SimpleMotorFeedforward mFeedForward = new SimpleMotorFeedforward(0.13305, 2.2876, 0.31596);
@@ -71,7 +70,6 @@ public class Drivetrain extends SubsystemBase {
   private Field2d mField = new Field2d();
 
   private FieldObject2d mIntakeVisual = mField.getObject("Intake");
-  
 
   private DirState mCurrentDirState = DirState.FORWARD;
   private SpeedState mCurrentSpeedState = SpeedState.NORMAL;
@@ -84,21 +82,18 @@ public class Drivetrain extends SubsystemBase {
   );
 
   public DifferentialDrivetrainSim mDrivetrainSim = new DifferentialDrivetrainSim( // Simulation
-      mDrivetrainPlant,
-      DCMotor.getFalcon500(2),
-      KitbotGearing.k10p71.value,
-      DriveConstants.kTrackwidth,
-      KitbotWheelSize.kSixInch.value,
-      null);
+    mDrivetrainPlant,
+    DCMotor.getFalcon500(2),
+    KitbotGearing.k10p71.value,
+    DriveConstants.kTrackwidth,
+    KitbotWheelSize.kSixInch.value,
+    null
+  );
 
   public Drivetrain() {
-
     mPigeon.reset();
-
     mOdometry = new DifferentialDriveOdometry(mPigeon.getRotation2d(), 0, 0);
-
     SmartDashboard.putData("Field", mField);
-
   }
 
   public void configureMotors() {
@@ -111,10 +106,10 @@ public class Drivetrain extends SubsystemBase {
     mFrontRight.setInverted(true);
     mBackRight.setInverted(true);
 
-    mFrontLeft.setNeutralMode(NeutralMode.Coast);
-    mFrontRight.setNeutralMode(NeutralMode.Coast);
-    mBackLeft.setNeutralMode(NeutralMode.Coast);
-    mBackRight.setNeutralMode(NeutralMode.Coast);
+    mFrontLeft.setNeutralMode(NeutralMode.Brake);
+    mFrontRight.setNeutralMode(NeutralMode.Brake);
+    mBackLeft.setNeutralMode(NeutralMode.Brake);
+    mBackRight.setNeutralMode(NeutralMode.Brake);
 
     mFrontLeft.setInverted(TalonFXInvertType.CounterClockwise);
     mBackLeft.setInverted(TalonFXInvertType.FollowMaster);
@@ -205,9 +200,10 @@ public class Drivetrain extends SubsystemBase {
   public void drive(double xSpeed, double rot) {
 
     var wheelSpeeds = new ChassisSpeeds(
-        xSpeed * mCurrentSpeedState.xMod * mCurrentDirState.direction,
-        0,
-        rot * mCurrentSpeedState.rotMod * mCurrentDirState.direction);
+      xSpeed * mCurrentSpeedState.xMod * mCurrentDirState.direction,
+      0,
+      rot * mCurrentSpeedState.rotMod * mCurrentDirState.direction
+    );
 
     setSpeeds(mKinematics.toWheelSpeeds(wheelSpeeds));
 
@@ -217,18 +213,14 @@ public class Drivetrain extends SubsystemBase {
     return mPigeon.getRotation2d();
   }
 
-  public double getAngularVel(){
-    return mPigeon.getRate();
-  }
-
   public class RotateRelative extends CommandBase {
 
     private DoubleSupplier mInput;
     private double mSetpoint;
 
-    private double kS = (RobotBase.isReal()) ? 0.05 : 0;
+    private double kS = (RobotBase.isReal()) ? DriveConstants.kTurnKS : 0;
 
-    private PIDController mPID = new PIDController(1d/15, 0, 1d/300);
+    private PIDController mPID = DriveConstants.kTurnPID;
 
     public RotateRelative(double angle) {
       mInput = () -> angle;
@@ -240,7 +232,7 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public void initialize() {
-      
+
       double inputDeg = mInput.getAsDouble();
       double normalizedCurrent = AngleUtil.normalizeAngle(getAngle().getDegrees());
 
@@ -255,6 +247,8 @@ public class Drivetrain extends SubsystemBase {
 
       double output = mPID.calculate(getAngle().getDegrees(), mSetpoint);
       output += (output > 0) ? kS : -kS;
+
+      output = MathUtil.clamp(output, -3, 3); //Limit to 3v
 
       setVoltages(-output, output);
 
@@ -282,8 +276,7 @@ public class Drivetrain extends SubsystemBase {
 
     private double kS = (RobotBase.isReal()) ? 0.05 : 0;
 
-    private PIDController mPID = new PIDController(1d/15, 0, 1d/300);
-
+    private PIDController mPID = DriveConstants.kTurnPID;
 
     public RotateAbsolute(Rotation2d angle) {
       mInput = () -> angle.getDegrees();
@@ -299,7 +292,7 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public void initialize() {
-      
+
       double normalizedCurrent = AngleUtil.normalizeAngle(getAngle().getDegrees());
       double inputDeg = mInput.getAsDouble();
 
@@ -314,6 +307,8 @@ public class Drivetrain extends SubsystemBase {
 
       double output = mPID.calculate(getAngle().getDegrees(), mSetpoint);
       output += (output > 0) ? kS : -kS;
+
+      output = MathUtil.clamp(output, -3, 3); //Limit to 3v
 
       setVoltages(-output, output);
 
@@ -337,12 +332,12 @@ public class Drivetrain extends SubsystemBase {
   public class DriveMeters extends CommandBase {
 
     private DoubleSupplier mDistanceSupplier;
-    private double initial;
 
-    private double kS = (RobotBase.isReal()) ? 0.1 : 0;
-    private double kP = 2;
+    private double kS = (RobotBase.isReal()) ? DriveConstants.kDriveKS : 0;
 
-    private PIDController mPID = new PIDController(kP, 0, 0);
+    private PIDController mPID = DriveConstants.kAutoDrivePID;
+
+    private double speedCap = DriveConstants.kMaxSpeed;
 
     public DriveMeters(double distance) {
       mDistanceSupplier = () -> distance;
@@ -350,6 +345,16 @@ public class Drivetrain extends SubsystemBase {
 
     public DriveMeters(DoubleSupplier distanceSupplier) {
       mDistanceSupplier = distanceSupplier;
+    }
+
+    public DriveMeters(double distance, double maxSpeed) {
+      mDistanceSupplier = () -> distance;
+      speedCap = maxSpeed;
+    }
+
+    public DriveMeters(DoubleSupplier distanceSupplier, double maxSpeed) {
+      mDistanceSupplier = distanceSupplier;
+      speedCap = maxSpeed;
     }
 
     @Override
@@ -364,9 +369,10 @@ public class Drivetrain extends SubsystemBase {
 
       output += (output > 0) ? kS : -kS;
 
+      output = MathUtil.clamp(output, -speedCap, speedCap);
+
       setSpeeds(new DifferentialDriveWheelSpeeds(output, output));
 
-      SmartDashboard.putNumber("DriveMeters/Initial", initial);
       SmartDashboard.putNumber("DriveMeters/Input", mDistanceSupplier.getAsDouble());
       SmartDashboard.putNumber("DriveMeters/Setpoint", mPID.getSetpoint());
       SmartDashboard.putBoolean("DriveMeters/At Setpoint", mPID.atSetpoint());
@@ -383,14 +389,39 @@ public class Drivetrain extends SubsystemBase {
     }
   }
 
+  public class Charge extends CommandBase {
+
+    private PIDController mPID = DriveConstants.kChargePID;
+
+    @Override
+    public void execute() {
+        
+      double output = mPID.calculate(getPitch(), 0);
+
+      setVoltages(output, output);
+
+      SmartDashboard.putNumber("Charge/Output", output);
+      SmartDashboard.putNumber("Charge/Current Pitch", getPitch());
+      SmartDashboard.putNumber("Charge/Error", mPID.getPositionError());
+
+    }
+
+    @Override
+    public boolean isFinished() {
+      return mPID.atSetpoint();
+    }
+
+  }
+
   public double getPitch() {
-    return mPigeon.getRoll(); //Pigeon is mounted wrong
+    return mPigeon.getRoll(); // Pigeon is mounted wrong
   }
 
   public Command changeState(DirState frontState) {
     return new InstantCommand(
         () -> mCurrentDirState = frontState);
   }
+
   public Command changeState(SpeedState modState) {
     return new InstantCommand(
         () -> mCurrentSpeedState = modState);
@@ -404,7 +435,7 @@ public class Drivetrain extends SubsystemBase {
     mOdometry.update(mPigeon.getRotation2d(), getWheelDistances()[0], getWheelDistances()[1]);
     mField.setRobotPose(mOdometry.getPoseMeters());
 
-    //Intake Visual
+    // Intake Visualizer
     Pose2d robotPose = mOdometry.getPoseMeters();
 
     Pose2d intakePose = new Pose2d(
@@ -431,7 +462,8 @@ public class Drivetrain extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
 
-    mDrivetrainSim.setInputs(mFrontLeft.get() * RobotController.getInputVoltage(), mFrontRight.get() * RobotController.getInputVoltage());
+    mDrivetrainSim.setInputs(mFrontLeft.get() * RobotController.getInputVoltage(),
+        mFrontRight.get() * RobotController.getInputVoltage());
 
     mDrivetrainSim.update(0.02);
 
@@ -456,7 +488,7 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putNumber("Drivetrain/Robot Angle", getAngle().getDegrees());
     SmartDashboard.putNumber("Drivetrain/Robot Pitch", getPitch());
     SmartDashboard.putNumber("Drivetrain/NormalizedAngle", AngleUtil.normalizeAngle(getAngle().getDegrees()));
-    
+
     SmartDashboard.putString("States/DriveDirection", mCurrentDirState.toString());
     SmartDashboard.putString("States/DriveSpeed", mCurrentSpeedState.toString());
 

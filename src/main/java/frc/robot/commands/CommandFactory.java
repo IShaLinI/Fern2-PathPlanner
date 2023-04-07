@@ -98,6 +98,14 @@ public class CommandFactory {
         return drivetrain.new DriveMeters(distance);
     }
 
+    public Command getDriveMeters(DoubleSupplier distanceSupplier, double maxSpeed){
+        return drivetrain.new DriveMeters(distanceSupplier, maxSpeed);
+    }
+
+    public Command getDriveMeters(double distance, double maxSpeed){
+        return drivetrain.new DriveMeters(distance, maxSpeed);
+    }
+
     public Command setDrivetrainStartingPose(RobotConstants.StartingPose bluePose, RobotConstants.StartingPose redPose){
         return new InstantCommand(
             () -> drivetrain.resetPoseAndGyro(
@@ -105,6 +113,10 @@ public class CommandFactory {
             ),
             drivetrain
         );
+    }
+
+    public Command getCharge(){
+        return drivetrain.new Charge();
     }
 
 }

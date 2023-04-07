@@ -21,7 +21,8 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.Constants.PivotConstants;
 
-/** Add your docs here. */
+
+@SuppressWarnings("unused")
 public class FernPivotSim {
 
     private TalonFXSimCollection mMotorSimCollection;

@@ -8,9 +8,9 @@ import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -29,6 +29,16 @@ public class Constants {
     public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI);
 
     public static SupplyCurrentLimitConfiguration kDriveCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(30);
+
+    //Volts
+    public static double kDriveKS = 0.25;
+    public static double kTurnKS = 0.125;
+
+    //PID Controllers
+    public static PIDController kTurnPID = new PIDController(1d / 15, 0, 1d / 300);
+    public static PIDController kAutoDrivePID = new PIDController(2, 0, 0);
+    public static PIDController kTeleDrivePID = new PIDController(0.5, 0, 0);
+    public static PIDController kChargePID = new PIDController(3d/11d, 0, 0);
 
     public static enum DirState {
      
