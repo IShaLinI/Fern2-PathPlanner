@@ -80,7 +80,7 @@ public class Constants {
 
         }
 
-        public static enum StartingPose {
+        public enum StartingPose {
      
           BLUE_SUB(new Pose2d(new Translation2d(2.2, 4.45), Rotation2d.fromDegrees(-90))),
           BLUE_MID(new Pose2d(new Translation2d(2.2, 2.75), Rotation2d.fromDegrees(-90))),
@@ -88,12 +88,9 @@ public class Constants {
 
           RED_SUB(AllianceTransform.flipAlliance(BLUE_SUB.pose)),
           RED_MID(AllianceTransform.flipAlliance(BLUE_MID.pose)),
-          RED_BUMP(AllianceTransform.flipAlliance(BLUE_BUMP.pose)),
+          RED_BUMP(AllianceTransform.flipAlliance(BLUE_BUMP.pose));
 
-          SUB((DriverStation.getAlliance() == Alliance.Blue) ? BLUE_SUB.pose : RED_SUB.pose),
-          MID((DriverStation.getAlliance() == Alliance.Blue) ? BLUE_MID.pose : RED_MID.pose),
-          BUMP((DriverStation.getAlliance() == Alliance.Blue) ? BLUE_BUMP.pose : RED_BUMP.pose);
-    
+          
           public final Pose2d pose;
     
           /**
@@ -140,6 +137,8 @@ public class Constants {
 
         public static double kGearing = ((1.0 / 20) * (16.0 / 60));
         public static double kThroughboreOffset = 0.5149;
+
+        public static SupplyCurrentLimitConfiguration kPivotCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(25);
 
         public static enum State {
           SUBSTATION(5),

@@ -95,11 +95,14 @@ public class AutoCommands {
 
         autoChooser.addOption("L3-Taxi-Sub",
             new SequentialCommandGroup(
-                new InstantCommand(() -> drivetrain.resetPoseAndGyro(RobotConstants.StartingPose.SUB.pose)),
+                new InstantCommand(
+                    () -> drivetrain.resetPoseAndGyro(
+                        (DriverStation.getAlliance() == Alliance.Blue) ? RobotConstants.StartingPose.BLUE_SUB.pose : RobotConstants.StartingPose.RED_SUB.pose
+                    ), 
+                    drivetrain
+                ),
                 eventMap.get("FireL3"),
-                eventMap.get("Carry"),
-                new RunCommand(() -> drivetrain.setVoltages(1, 1)),
-                drivetrain.RotateTo(0)
+                eventMap.get("Carry")
             )
         );
 

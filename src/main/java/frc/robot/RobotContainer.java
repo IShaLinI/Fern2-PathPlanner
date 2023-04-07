@@ -37,10 +37,11 @@ public class RobotContainer {
   private void configureBindings() {
     //#region Driver Controls
     mDrivetrain.setDefaultCommand(
-      new RunCommand(()-> mDrivetrain.drive(
-        Deadbander.applyLinearScaledDeadband(-mDriver.getLeftY(),0.1) * DriveConstants.kMaxSpeed,
-        Deadbander.applyLinearScaledDeadband(-mDriver.getRightX(), 0.1) * DriveConstants.kMaxTurnSpeed
-      ),
+      new RunCommand(()-> 
+        mDrivetrain.drive(
+          Deadbander.applyLinearScaledDeadband(-mDriver.getLeftY(),0.1) * DriveConstants.kMaxSpeed,
+          Deadbander.applyLinearScaledDeadband(-mDriver.getRightX(), 0.1) * DriveConstants.kMaxTurnSpeed
+        ),
         mDrivetrain
       )
     );
@@ -76,6 +77,11 @@ public class RobotContainer {
     ).onFalse(
       mAutoCommands.getEvent("Carry")
     );
+
+    mDriver.a().onTrue(
+      mDrivetrain.RotateTo(0)
+    );
+
 
     //#endregion
     //#region Operator Controls

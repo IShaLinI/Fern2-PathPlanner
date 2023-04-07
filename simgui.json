@@ -11,6 +11,18 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
+      "/LiveWindow/Ungrouped/DigitalInput[0]": "Digital Input",
+      "/LiveWindow/Ungrouped/PIDController[1]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[2]": "PIDController",
+      "/LiveWindow/Ungrouped/Pigeon 2 [5]": "Gyro",
+      "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
+      "/LiveWindow/Ungrouped/Talon FX [1]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Talon FX [2]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Talon FX [3]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Talon FX [4]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Talon FX [7]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Talon FX [8]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Talon SRX [6]": "Motor Controller",
       "/SmartDashboard/Arm Sim": "Mechanism2d",
       "/SmartDashboard/Arm Visualizer": "Mechanism2d",
       "/SmartDashboard/Auto Chooser": "String Chooser",
@@ -55,6 +67,9 @@
     "transitory": {
       "SmartDashboard": {
         "RotateRelative": {
+          "open": true
+        },
+        "RotateTo": {
           "open": true
         },
         "open": true

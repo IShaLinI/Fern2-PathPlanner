@@ -67,10 +67,8 @@ public class Pivot extends SubsystemBase {
         mMaster.setNeutralMode(NeutralMode.Brake);
         mSlave.setNeutralMode(NeutralMode.Brake);
 
-
-        SupplyCurrentLimitConfiguration mPivotCurrentLimit = new SupplyCurrentLimitConfiguration(true, 25, 25, 0);
-        mMaster.configSupplyCurrentLimit(mPivotCurrentLimit);
-        mSlave.configSupplyCurrentLimit(mPivotCurrentLimit);
+        mMaster.configSupplyCurrentLimit(PivotConstants.kPivotCurrentLimit);
+        mSlave.configSupplyCurrentLimit(PivotConstants.kPivotCurrentLimit);
         
         mSlave.follow(mMaster);
         mSlave.setInverted(InvertType.OpposeMaster);
