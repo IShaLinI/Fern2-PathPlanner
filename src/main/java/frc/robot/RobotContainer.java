@@ -67,23 +67,6 @@ public class RobotContainer {
       mDrivetrain.changeState(DriveConstants.SpeedState.NORMAL)
     );
 
-    mDriver.rightBumper().onTrue(
-      mCommandFactory.getSubPickup()
-    ).onFalse(
-      mCommandFactory.getCarry()
-    );
-
-    mDriver.leftBumper().onTrue(
-      mCommandFactory.getFireL1()
-    ).onFalse(
-      mCommandFactory.getCarry()
-    );
-
-    mDriver.a().onTrue(
-      mDrivetrain.new RotateAbsolute(90)
-    );
-
-
     //#endregion
     //#region Operator Controls
     
