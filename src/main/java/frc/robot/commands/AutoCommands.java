@@ -24,7 +24,7 @@ public class AutoCommands {
         autoChooser = new SendableChooser<>();
         autoChooser.addOption("Nothing", new PrintCommand("No auto selected"));
 
-        autoChooser.addOption("L3-Taxi-Sub",
+        autoChooser.addOption("Sub-L3-Taxi",
             new SequentialCommandGroup(
                 commandFactory.setDrivetrainStartingPose(StartingPose.BLUE_SUB, StartingPose.RED_SUB),
                 commandFactory.getFireL3(),
@@ -38,7 +38,7 @@ public class AutoCommands {
             )
         );
 
-        autoChooser.addOption("L3-Taxi-Charge", 
+        autoChooser.addOption("Mid-L3-Charge", 
             new SequentialCommandGroup(
                 commandFactory.setDrivetrainStartingPose(StartingPose.BLUE_MID, StartingPose.RED_MID),
                 commandFactory.getFireL3(),

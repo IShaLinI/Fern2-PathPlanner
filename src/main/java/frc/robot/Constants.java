@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import java.util.function.BooleanSupplier;
-
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -13,8 +11,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.util.field.AllianceTransform;
 import frc.util.motor.SimpleCurrentLimit;
 
@@ -39,6 +35,7 @@ public class Constants {
     public static PIDController kAutoDrivePID = new PIDController(2, 0, 0);
     public static PIDController kTeleDrivePID = new PIDController(0.5, 0, 0);
     public static PIDController kChargePID = new PIDController(3d/11d, 0, 0);
+    public static PIDController kSnapPID = new PIDController(1d/180, 0, 0);
 
     public static enum DirState {
      
@@ -92,8 +89,6 @@ public class Constants {
 
         }
 
-        public static BooleanSupplier isBlue = () -> DriverStation.getAlliance() == Alliance.Blue;
-
         public enum StartingPose {
      
           BLUE_SUB(new Pose2d(new Translation2d(2.2, 4.45), Rotation2d.fromDegrees(-90))),
@@ -120,15 +115,12 @@ public class Constants {
 
     public static class IntakeConstants {
     
-        public static final double kInSpeed = 0.25;
-        public static final double kOutSpeed = 0.40;
-
-        public static SupplyCurrentLimitConfiguration kIntakeCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(30);
+        public static SupplyCurrentLimitConfiguration kIntakeCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(40);
     
         public static enum State {
           
-          GRAB(-kInSpeed),
-          RELEASE(kOutSpeed),
+          GRAB(-0.25),
+          RELEASE(0.4),
           L1RELEASE(0.1),
           L2RELEASE(0.15),
           L3RELEASE(0.25),
@@ -155,7 +147,7 @@ public class Constants {
         public static SupplyCurrentLimitConfiguration kPivotCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(25);
 
         public static enum State {
-          SUBSTATION(5),
+          SUBSTATION(0),
           L1(45),
           L2(-20),
           L3(-30),

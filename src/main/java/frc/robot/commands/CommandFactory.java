@@ -7,6 +7,9 @@ import frc.robot.Constants.PivotConstants;
 import frc.robot.Constants.RobotConstants;
 
 import java.util.function.DoubleSupplier;
+
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.subsystems.*;
@@ -109,7 +112,7 @@ public class CommandFactory {
     public Command setDrivetrainStartingPose(RobotConstants.StartingPose bluePose, RobotConstants.StartingPose redPose){
         return new InstantCommand(
             () -> drivetrain.resetPoseAndGyro(
-                RobotConstants.isBlue.getAsBoolean() ? bluePose.pose : redPose.pose
+                DriverStation.getAlliance() == Alliance.Blue ? bluePose.pose : redPose.pose
             ),
             drivetrain
         );

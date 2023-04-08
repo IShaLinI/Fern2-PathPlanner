@@ -67,6 +67,16 @@ public class RobotContainer {
       mDrivetrain.changeState(DriveConstants.SpeedState.NORMAL)
     );
 
+    mDriver.a().toggleOnTrue(
+      new RunCommand(
+        () -> mDrivetrain.driveWGridMode(
+          Deadbander.applyLinearScaledDeadband(mDriver.getLeftX(),0.1) * DriveConstants.kMaxSpeed,
+          Deadbander.applyLinearScaledDeadband(-mDriver.getRightY(), 0.1) * 10
+        ),
+        mDrivetrain
+      )
+    );
+
     //#endregion
     //#region Operator Controls
     

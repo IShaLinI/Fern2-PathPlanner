@@ -15,5 +15,14 @@ public class AngleUtil {
         }
         return normalizedAngle;
     }
+
+    public static double nearestCardinalAngle(double angle) {
+        double nearestAngle = Math.round(angle / 90.0) * 90.0;
+        if (nearestAngle == 360.0) {
+            nearestAngle = 0.0;
+        }
+        return nearestAngle;
+    }
+    
 }
 

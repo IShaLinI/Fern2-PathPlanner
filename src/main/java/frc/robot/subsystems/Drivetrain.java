@@ -26,9 +26,10 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
-
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
@@ -91,6 +92,9 @@ public class Drivetrain extends SubsystemBase {
   );
 
   public Drivetrain() {
+
+    //TODO Tune Drive and Turn kS
+
     mPigeon.reset();
     mOdometry = new DifferentialDriveOdometry(mPigeon.getRotation2d(), 0, 0);
     SmartDashboard.putData("Field", mField);
@@ -164,28 +168,30 @@ public class Drivetrain extends SubsystemBase {
 
   public DifferentialDriveWheelSpeeds getWheelVelocities() {
     return new DifferentialDriveWheelSpeeds(
-        mFrontLeft.getSelectedSensorVelocity() * 10 * DriveConstants.kDistancePerPulse,
-        mFrontRight.getSelectedSensorVelocity() * 10 * DriveConstants.kDistancePerPulse);
+      mFrontLeft.getSelectedSensorVelocity() * 10 * DriveConstants.kDistancePerPulse,
+      mFrontRight.getSelectedSensorVelocity() * 10 * DriveConstants.kDistancePerPulse
+    );
   }
 
   public double[] getWheelDistances() {
     double[] distances = {
-        mFrontLeft.getSelectedSensorPosition() * DriveConstants.kDistancePerPulse,
-        mFrontRight.getSelectedSensorPosition() * DriveConstants.kDistancePerPulse
+      mFrontLeft.getSelectedSensorPosition() * DriveConstants.kDistancePerPulse,
+      mFrontRight.getSelectedSensorPosition() * DriveConstants.kDistancePerPulse
     };
     return distances;
   }
 
+  public Pose2d getRobotPosition() {
+    return mOdometry.getPoseMeters();
+  }
+  
   public void setSpeeds(DifferentialDriveWheelSpeeds speeds) {
 
     final double leftFeedforward = mFeedForward.calculate(speeds.leftMetersPerSecond);
     final double rightFeedforward = mFeedForward.calculate(speeds.rightMetersPerSecond);
 
-    final double leftOutput = mPIDController.calculate(getWheelVelocities().leftMetersPerSecond,
-        speeds.leftMetersPerSecond);
-
-    final double rightOutput = mPIDController.calculate(getWheelVelocities().rightMetersPerSecond,
-        speeds.rightMetersPerSecond);
+    final double leftOutput = mPIDController.calculate(getWheelVelocities().leftMetersPerSecond, speeds.leftMetersPerSecond);
+    final double rightOutput = mPIDController.calculate(getWheelVelocities().rightMetersPerSecond, speeds.rightMetersPerSecond);
 
     setVoltages(leftOutput + leftFeedforward, rightOutput + rightFeedforward);
   }
@@ -209,10 +215,40 @@ public class Drivetrain extends SubsystemBase {
 
   }
 
+  public void driveWGridMode(double xSpeed, double trim){
+
+    if(xSpeed == 0){
+      trim = 0;
+    }
+
+    if(xSpeed < 0){
+      trim *= -1;
+    }
+
+    double gridAngle = (DriverStation.getAlliance() == Alliance.Blue ? -90 : 90) + trim;
+
+    PIDController mSnapPID = DriveConstants.kSnapPID;
+    
+    double effort = mSnapPID.calculate(AngleUtil.normalizeAngle(getAngle().getDegrees()), gridAngle);
+
+    var wheelSpeeds = new ChassisSpeeds(
+      xSpeed * mCurrentSpeedState.xMod * mCurrentDirState.direction,
+      0,
+       effort * DriveConstants.kMaxTurnSpeed
+    );
+
+    setSpeeds(mKinematics.toWheelSpeeds(wheelSpeeds));
+
+  }
+
   public Rotation2d getAngle() {
     return mPigeon.getRotation2d();
   }
-
+  
+  public double getPitch() {
+    return mPigeon.getRoll(); // Pigeon is mounted wrong
+  }
+  
   public class RotateRelative extends CommandBase {
 
     private DoubleSupplier mInput;
@@ -413,10 +449,6 @@ public class Drivetrain extends SubsystemBase {
 
   }
 
-  public double getPitch() {
-    return mPigeon.getRoll(); // Pigeon is mounted wrong
-  }
-
   public Command changeState(DirState frontState) {
     return new InstantCommand(
         () -> mCurrentDirState = frontState);
@@ -425,10 +457,6 @@ public class Drivetrain extends SubsystemBase {
   public Command changeState(SpeedState modState) {
     return new InstantCommand(
         () -> mCurrentSpeedState = modState);
-  }
-
-  public Pose2d getRobotPosition() {
-    return mOdometry.getPoseMeters();
   }
 
   public void updateOdometry() {
@@ -457,6 +485,10 @@ public class Drivetrain extends SubsystemBase {
   public void resetPoseAndGyro(Pose2d pose) {
     mPigeon.setYaw(pose.getRotation().getDegrees());
     mOdometry.resetPosition(pose.getRotation(), getWheelDistances()[0], getWheelDistances()[1], pose);
+  }
+
+  public void stop() {
+    setVoltages(0, 0);
   }
 
   @Override
@@ -493,10 +525,6 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putString("States/DriveSpeed", mCurrentSpeedState.toString());
 
     updateOdometry();
-  }
-
-  public void stop() {
-    setVoltages(0, 0);
   }
 
 }

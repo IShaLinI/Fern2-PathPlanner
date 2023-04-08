@@ -83,7 +83,7 @@ public class Pivot extends SubsystemBase {
 
         output += (getAngle() < 0) ? kS : -kS; 
         
-        mMaster.set(output);
+        mMaster.set(MathUtil.clamp(output, -1, 1));
         
     }
 
@@ -117,20 +117,12 @@ public class Pivot extends SubsystemBase {
         return mMaster.get();
     }
 
-    public void resetFalcon() {
-        mMaster.setSelectedSensorPosition(0);
-    }
-
     public double degreeToFalcon(double deg) {
         return (deg * 2048d * 1/PivotConstants.kGearing * 1/360);
     }
 
     public Command changeState(State state){
       return new InstantCommand(() -> mCurrentState = state);
-    }
-
-    public void set(double percent){
-      mMaster.set(percent);
     }
 
     @Override
