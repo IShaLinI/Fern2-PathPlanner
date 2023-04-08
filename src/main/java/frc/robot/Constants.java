@@ -18,24 +18,24 @@ public class Constants {
 
   public static class DriveConstants{
 
-    public static double kTrackwidth = Units.inchesToMeters(19);
-    public static double kDistancePerPulse = (1.0/2048d) * (Units.inchesToMeters(6) * Math.PI) * (1/10.71);
+    public static final double kTrackwidth = Units.inchesToMeters(19);
+    public static final double kDistancePerPulse = (1.0/2048d) * (Units.inchesToMeters(6) * Math.PI) * (1/10.71);
     
-    public static double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60d);
-    public static double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI);
+    public static final double kMaxSpeed = 6380.0 * (1 / 10.71) * (Units.inchesToMeters(6) * Math.PI) * (1 / 60d);
+    public static final double kMaxTurnSpeed = (kMaxSpeed * (1 / (kTrackwidth * Math.PI))) * (2 * Math.PI);
 
-    public static SupplyCurrentLimitConfiguration kDriveCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(30);
+    public static final SupplyCurrentLimitConfiguration kDriveCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(30);
 
     //Volts
-    public static double kDriveKS = 0.25;
-    public static double kTurnKS = 0.125;
+    public static final double kDriveKS = 0.25;
+    public static final double kTurnKS = 0.125;
 
     //PID Controllers
-    public static PIDController kTurnPID = new PIDController(1d / 15, 0, 1d / 300);
-    public static PIDController kAutoDrivePID = new PIDController(2, 0, 0);
-    public static PIDController kTeleDrivePID = new PIDController(0.5, 0, 0);
-    public static PIDController kChargePID = new PIDController(3d/11d, 0, 0);
-    public static PIDController kSnapPID = new PIDController(1d/180, 0, 0);
+    public static final PIDController kTurnPID = new PIDController(1d / 15, 0, 1d / 300);
+    public static final PIDController kAutoDrivePID = new PIDController(2, 0, 0);
+    public static final PIDController kTeleDrivePID = new PIDController(0.5, 0, 0);
+    public static final PIDController kChargePID = new PIDController(3d/11d, 0, 0);
+    public static final PIDController kSnapPID = new PIDController(1d/180, 0, 0);
 
     public static enum DirState {
      
@@ -78,14 +78,14 @@ public class Constants {
 
     public static class RobotConstants{
         public static class CAN {
-          public static int kFrontLeft = 1;
-          public static int kBackLeft = 2;
-          public static int kFrontRight = 3;
-          public static int kBackRight = 4;
-          public static int kPigeon = 5;
-          public static int kIntake = 6;
-          public static int kFrontPivot = 7;
-          public static int kBackPivot = 8;
+          public static final int kFrontLeft = 1;
+          public static final int kBackLeft = 2;
+          public static final int kFrontRight = 3;
+          public static final int kBackRight = 4;
+          public static final int kPigeon = 5;
+          public static final int kIntake = 6;
+          public static final int kFrontPivot = 7;
+          public static final int kBackPivot = 8;
 
         }
 
@@ -141,10 +141,10 @@ public class Constants {
 
       public static class PivotConstants {
 
-        public static double kGearing = ((1.0 / 20) * (16.0 / 60));
-        public static double kThroughboreOffset = 0.5149;
+        public static final double kGearing = ((1.0 / 20) * (16.0 / 60));
+        public static final double kThroughboreOffset = 0.5149;
 
-        public static SupplyCurrentLimitConfiguration kPivotCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(25);
+        public static final SupplyCurrentLimitConfiguration kPivotCurrentLimit = SimpleCurrentLimit.getSimpleCurrentLimit(25);
 
         public static enum State {
           SUBSTATION(0),

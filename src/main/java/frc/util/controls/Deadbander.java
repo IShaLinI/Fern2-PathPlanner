@@ -9,7 +9,7 @@ public class Deadbander {
      * @param thresh Deadband threshold
      * @return Deadbanded value
      */
-    public static double applyLinearScaledDeadband(double input, double thresh) {
+    public static final double applyLinearScaledDeadband(double input, double thresh) {
         if (Math.abs(input) < thresh) {
             return 0;
         } else {
@@ -22,7 +22,7 @@ public class Deadbander {
      * @param thresh Deadband threshold
      * @return Deadbanded Value
      */
-    public double applySimpleDeadband(double input, double thresh){
+    public static final double applySimpleDeadband(double input, double thresh){
         if(input > thresh){
             return input;
         }

@@ -9,7 +9,7 @@ import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 /** Add your docs here. */
 public class SimpleCurrentLimit {
 
-    public static SupplyCurrentLimitConfiguration getSimpleCurrentLimit(double limit){
+    public static final SupplyCurrentLimitConfiguration getSimpleCurrentLimit(double limit){
         return new SupplyCurrentLimitConfiguration(true, limit, limit, 0);
     }
 

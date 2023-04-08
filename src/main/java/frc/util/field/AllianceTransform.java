@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class AllianceTransform {
  
-    public static Pose2d flipAlliance(Pose2d pose){
+    public static final Pose2d flipAlliance(Pose2d pose){
 
         double xComp = pose.getX();
         double yComp = pose.getY();
@@ -27,7 +27,7 @@ public class AllianceTransform {
 
     }
 
-    public static DoubleSupplier allianceBasedDouble(double blueVal, double redVal){
+    public static final DoubleSupplier allianceBasedDouble(double blueVal, double redVal){
         return () -> DriverStation.getAlliance() == Alliance.Blue ? blueVal : redVal;
     }
 
