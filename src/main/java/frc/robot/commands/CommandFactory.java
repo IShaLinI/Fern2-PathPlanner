@@ -86,11 +86,11 @@ public class CommandFactory {
     }
 
     public Command getRotateAbsolute(DoubleSupplier angleSupplier){
-        return drivetrain.new RotateRelative(angleSupplier);
+        return drivetrain.new RotateAbsolute(angleSupplier);
     }
 
     public Command getRotateAbsolute(double angle){
-        return drivetrain.new RotateRelative(angle);
+        return drivetrain.new RotateAbsolute(angle);
     }
 
     public Command getDriveMeters(DoubleSupplier distanceSupplier){
